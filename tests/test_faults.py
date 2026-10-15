@@ -1,9 +1,10 @@
 """Tests for FaultInjector and fault simulation modes."""
 
 import pytest
-from mirror.models import FaultMode, FaultRule, ScenarioConfig
+
 from mirror.environment import EnvironmentController, RefundService
 from mirror.faults import FaultInjector
+from mirror.models import FaultMode, FaultRule, ScenarioConfig
 
 
 def test_fault_injector_occurrence_matching():

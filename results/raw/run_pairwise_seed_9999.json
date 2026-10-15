@@ -1,0 +1,392 @@
+[
+  {
+    "step": 1,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0001",
+    "faults": [
+      "payment.refund#1:permission_revoked",
+      "payment.get_order_status#2:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 0,
+    "service_calls": 1
+  },
+  {
+    "step": 2,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0002",
+    "faults": [
+      "payment.refund#1:timeout_before_commit",
+      "payment.refund#2:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 0,
+    "service_calls": 3
+  },
+  {
+    "step": 3,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0003",
+    "faults": [
+      "payment.refund#2:corrupted_response",
+      "payment.get_order_status#2:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 4,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0004",
+    "faults": [
+      "payment.refund#2:corrupted_response",
+      "payment.get_order_status#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 5,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0005",
+    "faults": [
+      "payment.refund#1:timeout_after_commit",
+      "payment.refund#2:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 6,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0006",
+    "faults": [
+      "payment.refund#2:timeout_after_commit",
+      "payment.get_order_status#1:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 7,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0007",
+    "faults": [
+      "payment.get_order_status#1:permission_revoked",
+      "payment.get_order_status#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 8,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0008",
+    "faults": [
+      "payment.refund#1:rate_limited",
+      "payment.get_order_status#2:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 9,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0009",
+    "faults": [
+      "payment.refund#2:timeout_after_commit",
+      "payment.get_order_status#2:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 10,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0010",
+    "faults": [
+      "payment.refund#2:timeout_after_commit",
+      "payment.get_order_status#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 11,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0011",
+    "faults": [
+      "payment.refund#2:timeout_before_commit",
+      "payment.get_order_status#1:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 12,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0012",
+    "faults": [
+      "payment.refund#1:timeout_before_commit",
+      "payment.get_order_status#2:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 3
+  },
+  {
+    "step": 13,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0013",
+    "faults": [
+      "payment.refund#1:permission_revoked",
+      "payment.refund#2:rate_limited"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 0,
+    "service_calls": 1
+  },
+  {
+    "step": 14,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0014",
+    "faults": [
+      "payment.refund#1:corrupted_response",
+      "payment.refund#2:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 15,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0015",
+    "faults": [
+      "payment.refund#1:corrupted_response",
+      "payment.refund#2:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 16,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0016",
+    "faults": [
+      "payment.refund#1:corrupted_response",
+      "payment.get_order_status#1:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 17,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0017",
+    "faults": [
+      "payment.refund#1:timeout_before_commit",
+      "payment.get_order_status#2:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 3
+  },
+  {
+    "step": 18,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0018",
+    "faults": [
+      "payment.get_order_status#1:timeout_before_commit",
+      "payment.get_order_status#2:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 19,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0019",
+    "faults": [
+      "payment.get_order_status#1:stale_read",
+      "payment.get_order_status#2:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 20,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0020",
+    "faults": [
+      "payment.refund#1:permission_revoked",
+      "payment.get_order_status#1:rate_limited"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 0,
+    "service_calls": 1
+  },
+  {
+    "step": 21,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0021",
+    "faults": [
+      "payment.get_order_status#1:rate_limited",
+      "payment.get_order_status#2:rate_limited"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 22,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0022",
+    "faults": [
+      "payment.refund#2:rate_limited",
+      "payment.get_order_status#1:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 23,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0023",
+    "faults": [
+      "payment.refund#1:permission_revoked",
+      "payment.get_order_status#1:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 0,
+    "service_calls": 1
+  },
+  {
+    "step": 24,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0024",
+    "faults": [
+      "payment.refund#1:corrupted_response",
+      "payment.get_order_status#1:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 25,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0025",
+    "faults": [
+      "payment.refund#1:corrupted_response",
+      "payment.get_order_status#2:rate_limited"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 26,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0026",
+    "faults": [
+      "payment.refund#2:corrupted_response",
+      "payment.get_order_status#1:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 27,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0027",
+    "faults": [
+      "payment.get_order_status#1:corrupted_response",
+      "payment.get_order_status#2:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 28,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0028",
+    "faults": [
+      "payment.refund#1:server_error",
+      "payment.get_order_status#1:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 29,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0029",
+    "faults": [
+      "payment.refund#1:timeout_after_commit",
+      "payment.get_order_status#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 30,
+    "strategy": "pairwise_combinatorial",
+    "scenario_id": "pairwise-0030",
+    "faults": [
+      "payment.refund#1:rate_limited",
+      "payment.get_order_status#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  }
+]

@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from enum import Enum
 from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -19,6 +20,9 @@ class FaultMode(str, Enum):
     PERMISSION_REVOKED = "permission_revoked"
     RATE_LIMITED = "rate_limited"
     CORRUPTED_RESPONSE = "corrupted_response"
+    EVENTUAL_CONSISTENCY = "eventual_consistency"
+    PARTIAL_DELETION = "partial_deletion"
+    DEPENDENCY_FAILURE = "dependency_failure"
 
 
 class FaultRule(BaseModel):
@@ -62,7 +66,12 @@ class InitialState(BaseModel):
     order_id: str = "ORD-104"
     order_amount: int = 100
     refund_count: int = 0
-    permissions: Dict[str, bool] = Field(default_factory=lambda: {"payment.refund": True, "payment.get_order_status": True})
+    tenant_id: str = "tenant-001"
+    customer_id: str = "cust-101"
+    initial_balance: int = 100
+    permissions: Dict[str, bool] = Field(
+        default_factory=lambda: {"payment.refund": True, "payment.get_order_status": True}
+    )
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -71,6 +80,7 @@ class ScenarioConfig(BaseModel):
 
     id: str
     task: str = "refund_order"
+    category: str = "dev"  # "dev" or "eval" (held-out)
     initial_state: InitialState = Field(default_factory=InitialState)
     faults: List[FaultRule] = Field(default_factory=list)
     invariants: List[str] = Field(
@@ -78,6 +88,7 @@ class ScenarioConfig(BaseModel):
             "refund_count <= 1",
             "ledger_matches_agent",
             "permission_respected",
+            "amount_conservation",
         ]
     )
     metadata: Dict[str, Any] = Field(default_factory=dict)

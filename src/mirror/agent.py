@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import abc
-import uuid
-from typing import Any, Dict, Optional
+from typing import Any, Dict
+
 from mirror.environment import RefundService
 
 

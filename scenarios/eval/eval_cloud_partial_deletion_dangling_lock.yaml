@@ -1,0 +1,33 @@
+id: eval_cloud_partial_deletion_dangling_lock_004
+task: deploy_cloud_stack
+category: eval
+initial_state:
+  order_id: CLOUD-STACK-404
+  order_amount: 0
+  refund_count: 0
+  tenant_id: tenant-eval-04
+  customer_id: cust-eval-04
+  permissions:
+    cloud.create_vpc: true
+    cloud.delete_vpc: true
+    cloud.provision_vm: true
+    cloud.terminate_vm: true
+    cloud.create_bucket: true
+    cloud.delete_bucket: true
+    cloud.describe_resources: true
+faults:
+  - tool: cloud.create_bucket
+    occurrence: 1
+    mode: permission_revoked
+    parameters: {}
+invariants:
+  - no_dangling_resources
+  - tenant_isolation
+  - state_consistency
+expected:
+  reproduction: true
+  violation: dangling_resources
+minimal: true
+metadata:
+  held_out: true
+  description: "Held-out evaluation scenario: Permission revoked on bucket creation causes naive deployer to crash and abandon active VPC and VM."

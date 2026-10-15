@@ -1,8 +1,9 @@
 """Tests for AuthoritativeLedger, EnvironmentController, and RefundService."""
 
 import pytest
-from mirror.models import FaultMode, FaultRule, InitialState, ScenarioConfig
+
 from mirror.environment import AuthoritativeLedger, EnvironmentController, RefundService
+from mirror.models import FaultMode, FaultRule, InitialState, ScenarioConfig
 
 
 def test_authoritative_ledger_initial_state():

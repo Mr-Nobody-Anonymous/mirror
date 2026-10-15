@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Union
+
 import yaml
+
+from mirror.agent import BaseAgent
+from mirror.environment import EnvironmentController, RefundService
+from mirror.evaluator import evaluate_scenario
 from mirror.models import (
     EvaluationReport,
     FaultMode,
@@ -14,9 +18,6 @@ from mirror.models import (
     RegressionArtifact,
     ScenarioConfig,
 )
-from mirror.environment import EnvironmentController, RefundService
-from mirror.evaluator import evaluate_scenario
-from mirror.agent import BaseAgent
 
 
 def save_regression_artifact(

@@ -1,0 +1,37 @@
+id: eval_cloud_eventual_consistency_duplicate_vm_002
+task: deploy_cloud_stack
+category: eval
+initial_state:
+  order_id: CLOUD-STACK-202
+  order_amount: 0
+  refund_count: 0
+  tenant_id: tenant-cloud-eval
+  customer_id: cust-cloud-eval
+  permissions:
+    cloud.create_vpc: true
+    cloud.delete_vpc: true
+    cloud.provision_vm: true
+    cloud.terminate_vm: true
+    cloud.create_bucket: true
+    cloud.delete_bucket: true
+    cloud.describe_resources: true
+faults:
+  - tool: cloud.provision_vm
+    occurrence: 1
+    mode: timeout_after_commit
+    parameters: {}
+  - tool: cloud.describe_resources
+    occurrence: 1
+    mode: eventual_consistency
+    parameters: {}
+invariants:
+  - no_duplicate_provisioning
+  - tenant_isolation
+  - no_dangling_resources
+expected:
+  reproduction: true
+  violation: duplicate_provisioning
+minimal: true
+metadata:
+  held_out: true
+  description: "Held-out evaluation scenario: Provisioning timeout coupled with eventual consistency read lag triggers duplicate VM creation."

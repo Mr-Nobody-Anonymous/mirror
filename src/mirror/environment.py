@@ -6,14 +6,14 @@ import copy
 import time
 import uuid
 from typing import Any, Dict, List, Optional
+
+from mirror.faults import FaultInjector
 from mirror.models import (
     EventRecord,
     FaultMode,
-    FaultRule,
     InitialState,
     ScenarioConfig,
 )
-from mirror.faults import FaultInjector
 
 
 class AuthoritativeLedger:
@@ -36,11 +36,32 @@ class AuthoritativeLedger:
                 "refund_count": self.state.refund_count,
                 "status": init_status,
                 "refund_transactions": [],
+                "tenant_id": getattr(self.state, "tenant_id", "tenant-001"),
+                "customer_id": getattr(self.state, "customer_id", "cust-101"),
             }
         }
         self.permissions: Dict[str, bool] = copy.deepcopy(self.state.permissions)
         self.idempotency_records: Dict[str, Dict[str, Any]] = {}
         self.history: List[Dict[str, Any]] = []
+
+    def add_order(
+        self,
+        order_id: str,
+        amount: int,
+        tenant_id: str = "tenant-001",
+        customer_id: str = "cust-101",
+    ) -> None:
+        """Register an additional order for multi-order / multi-tenant simulations."""
+        self.orders[order_id] = {
+            "order_id": order_id,
+            "amount": amount,
+            "refunded_amount": 0,
+            "refund_count": 0,
+            "status": "paid",
+            "refund_transactions": [],
+            "tenant_id": tenant_id,
+            "customer_id": customer_id,
+        }
 
     def is_permission_granted(self, tool: str) -> bool:
         return self.permissions.get(tool, True)
@@ -53,12 +74,23 @@ class AuthoritativeLedger:
         order_id: str,
         amount: int,
         idempotency_key: Optional[str] = None,
+        tenant_id: Optional[str] = None,
+        customer_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Atomically commit a refund transaction into the authoritative ledger."""
         if order_id not in self.orders:
             raise ValueError(f"Unknown order {order_id}")
 
         order = self.orders[order_id]
+
+        if tenant_id and "tenant_id" in order and order["tenant_id"] != tenant_id:
+            raise PermissionError(
+                f"Tenant isolation violation: tenant {tenant_id} cannot access order {order_id} of tenant {order['tenant_id']}"
+            )
+        if customer_id and "customer_id" in order and order["customer_id"] != customer_id:
+            raise PermissionError(
+                f"Customer isolation violation: customer {customer_id} cannot access order {order_id} of customer {order['customer_id']}"
+            )
 
         # Idempotency check: if key already exists, return previous transaction
         if idempotency_key and idempotency_key in self.idempotency_records:
@@ -197,7 +229,15 @@ class EnvironmentController:
             order_id = inputs.get("order_id", self.config.initial_state.order_id)
             amount = inputs.get("amount", self.config.initial_state.order_amount)
             idempotency_key = inputs.get("idempotency_key")
-            output = self.ledger.commit_refund(order_id, amount, idempotency_key=idempotency_key)
+            tenant_id = inputs.get("tenant_id")
+            customer_id = inputs.get("customer_id")
+            output = self.ledger.commit_refund(
+                order_id,
+                amount,
+                idempotency_key=idempotency_key,
+                tenant_id=tenant_id,
+                customer_id=customer_id,
+            )
             side_effects["refund_committed"] = True
             side_effects["current_refund_count"] = self.ledger.total_refunds
 

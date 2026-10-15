@@ -17,11 +17,12 @@ invariants:
 - refund_count <= 1
 - ledger_matches_agent
 - permission_respected
+- amount_conservation
 expected:
   reproduction: true
   violation: duplicate_refund
 minimal: true
-discovered_at: 1792074216.685774
+discovered_at: 1792083202.2976017
 metadata:
   seed: 2024
   discovered_by: AdaptiveSearchEngine

@@ -1,10 +1,9 @@
 """Tests for search engines (Random and Adaptive) and Delta Debugging minimization."""
 
-import pytest
-from mirror.models import FaultMode, FaultRule, ScenarioConfig
 from mirror.agent import NaiveRefundAgent
-from mirror.search import RandomSearchEngine, AdaptiveSearchEngine
 from mirror.minimize import ScenarioMinimizer
+from mirror.models import FaultMode, FaultRule, ScenarioConfig
+from mirror.search import AdaptiveSearchEngine, RandomSearchEngine
 
 
 def test_random_search_finds_violations():

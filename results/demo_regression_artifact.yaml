@@ -1,0 +1,32 @@
+id: demo_minimized_regression_test
+task: refund_order
+initial_state:
+  order_id: ORD-DEMO-99
+  order_amount: 100
+  refund_count: 0
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+  metadata: {}
+faults:
+- tool: payment.refund
+  occurrence: 1
+  mode: timeout_after_commit
+  parameters: {}
+- tool: payment.get_order_status
+  occurrence: 1
+  mode: stale_read
+  parameters: {}
+invariants:
+- refund_count <= 1
+- amount_conservation
+- ledger_matches_agent
+expected:
+  reproduction: true
+  violation: duplicate_refund
+minimal: true
+discovered_at: 1792082862.1977637
+metadata:
+  created_by: Project MIRROR CLI Demo
+  evaluations_to_minimize: 27
+  reduction_pct: 50.0

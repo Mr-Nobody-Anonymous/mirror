@@ -1,17 +1,17 @@
-"""Scenario search engine (Random and Adaptive feedback-guided) for Project MIRROR."""
+"""Scenario search engines (Random, Pairwise Combinatorial, Adaptive UCB, Hybrid) for Project MIRROR."""
 
 from __future__ import annotations
 
-import copy
 import math
 import random
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set, Tuple
-from mirror.models import FaultMode, FaultRule, InitialState, ScenarioConfig, EvaluationReport
-from mirror.faults import FaultCatalog
+
+from mirror.agent import BaseAgent
 from mirror.environment import EnvironmentController, RefundService
 from mirror.evaluator import evaluate_scenario
-from mirror.agent import BaseAgent
+from mirror.faults import FaultCatalog
+from mirror.models import EvaluationReport, FaultMode, FaultRule, InitialState, ScenarioConfig
 
 
 @dataclass
@@ -24,8 +24,10 @@ class SearchResult:
     discovered_scenarios: List[ScenarioConfig] = field(default_factory=list)
     reports: List[EvaluationReport] = field(default_factory=list)
     discovery_history: List[Dict[str, Any]] = field(default_factory=list)
+    raw_experiments: List[Dict[str, Any]] = field(default_factory=list)
     mode_yield_stats: Dict[str, Dict[str, int]] = field(default_factory=dict)
     pair_yield_stats: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    strategy: str = "random"
 
 
 class RandomSearchEngine:
@@ -70,6 +72,7 @@ class RandomSearchEngine:
         discovered: List[ScenarioConfig] = []
         reports: List[EvaluationReport] = []
         history: List[Dict[str, Any]] = []
+        raw_experiments: List[Dict[str, Any]] = []
         first_discovery: Optional[int] = None
         seen_violations: Set[str] = set()
 
@@ -89,17 +92,30 @@ class RandomSearchEngine:
                 pass
 
             rep = evaluate_scenario(controller, agent_result, cand)
+            viol_names = [v.invariant_name for v in rep.violations]
+
+            raw_experiments.append({
+                "step": step,
+                "strategy": "random",
+                "scenario_id": cand.id,
+                "faults": [f.signature() for f in cand.faults],
+                "violation": rep.safety_violation,
+                "violations": viol_names,
+                "refund_count": rep.refund_count,
+                "service_calls": rep.service_calls,
+            })
+
             if rep.safety_violation:
                 if first_discovery is None:
                     first_discovery = step
-                v_sig = "-".join(sorted(v.invariant_name for v in rep.violations))
+                v_sig = "-".join(sorted(viol_names))
                 seen_violations.add(v_sig)
                 discovered.append(cand)
                 reports.append(rep)
                 history.append({
                     "step": step,
                     "scenario_id": cand.id,
-                    "violations": [v.invariant_name for v in rep.violations],
+                    "violations": viol_names,
                     "faults": [f.signature() for f in cand.faults],
                 })
 
@@ -110,13 +126,129 @@ class RandomSearchEngine:
             discovered_scenarios=discovered,
             reports=reports,
             discovery_history=history,
+            raw_experiments=raw_experiments,
+            strategy="random",
+        )
+
+
+class PairwiseCombinatorialSearchEngine:
+    """Systematic pairwise combinatorial testing baseline.
+
+    Constructs and systematically covers 2-way interactions between (tool, occurrence, mode)
+    fault rules to guarantee interaction coverage of the fault space.
+    """
+
+    def __init__(
+        self,
+        agent: BaseAgent,
+        max_faults_per_scenario: int = 2,
+        seed: Optional[int] = None,
+    ):
+        self.agent = agent
+        self.max_faults = max_faults_per_scenario
+        self.rng = random.Random(seed)
+        self.pairs_pool: List[Tuple[FaultRule, FaultRule]] = self._generate_all_pairs()
+        self.rng.shuffle(self.pairs_pool)
+        self.current_idx = 0
+
+    def _generate_all_pairs(self) -> List[Tuple[FaultRule, FaultRule]]:
+        singles: List[FaultRule] = []
+        for tool in FaultCatalog.SUPPORTED_TOOLS:
+            for occ in [1, 2]:
+                for mode in FaultCatalog.get_valid_modes_for_tool(tool):
+                    if mode != FaultMode.NONE:
+                        singles.append(FaultRule(tool=tool, occurrence=occ, mode=mode))
+
+        pairs: List[Tuple[FaultRule, FaultRule]] = []
+        for i in range(len(singles)):
+            for j in range(i + 1, len(singles)):
+                f1 = singles[i]
+                f2 = singles[j]
+                if (f1.tool, f1.occurrence) != (f2.tool, f2.occurrence):
+                    pairs.append((f1, f2))
+        return pairs
+
+    def generate_candidate(self, scenario_id: str) -> ScenarioConfig:
+        if self.pairs_pool:
+            pair = self.pairs_pool[self.current_idx % len(self.pairs_pool)]
+            self.current_idx += 1
+            faults = [pair[0], pair[1]]
+        else:
+            faults = []
+
+        return ScenarioConfig(
+            id=scenario_id,
+            initial_state=InitialState(),
+            faults=faults,
+        )
+
+    def run(self, budget: int) -> SearchResult:
+        discovered: List[ScenarioConfig] = []
+        reports: List[EvaluationReport] = []
+        history: List[Dict[str, Any]] = []
+        raw_experiments: List[Dict[str, Any]] = []
+        first_discovery: Optional[int] = None
+        seen_violations: Set[str] = set()
+
+        for step in range(1, budget + 1):
+            cand = self.generate_candidate(f"pairwise-{step:04d}")
+            controller = EnvironmentController(config=cand)
+            service = RefundService(controller=controller)
+
+            agent_result = None
+            try:
+                agent_result = self.agent.run(
+                    service=service,
+                    order_id=cand.initial_state.order_id,
+                    amount=cand.initial_state.order_amount,
+                )
+            except Exception:
+                pass
+
+            rep = evaluate_scenario(controller, agent_result, cand)
+            viol_names = [v.invariant_name for v in rep.violations]
+
+            raw_experiments.append({
+                "step": step,
+                "strategy": "pairwise_combinatorial",
+                "scenario_id": cand.id,
+                "faults": [f.signature() for f in cand.faults],
+                "violation": rep.safety_violation,
+                "violations": viol_names,
+                "refund_count": rep.refund_count,
+                "service_calls": rep.service_calls,
+            })
+
+            if rep.safety_violation:
+                if first_discovery is None:
+                    first_discovery = step
+                v_sig = "-".join(sorted(viol_names))
+                seen_violations.add(v_sig)
+                discovered.append(cand)
+                reports.append(rep)
+                history.append({
+                    "step": step,
+                    "scenario_id": cand.id,
+                    "violations": viol_names,
+                    "faults": [f.signature() for f in cand.faults],
+                })
+
+        return SearchResult(
+            total_experiments=budget,
+            unique_violations_found=len(seen_violations),
+            first_discovery_step=first_discovery,
+            discovered_scenarios=discovered,
+            reports=reports,
+            discovery_history=history,
+            raw_experiments=raw_experiments,
+            strategy="pairwise_combinatorial",
         )
 
 
 class AdaptiveSearchEngine:
     """Feedback-guided scenario search using Upper Confidence Bound (UCB).
 
-    Maintains exploration-exploitation statistics for individual fault modes
+    Maintains multi-armed bandit statistics for individual fault modes
     and pairwise fault interactions, prioritizing condition combinations
     that correlate with invariant violations.
     """
@@ -133,20 +265,16 @@ class AdaptiveSearchEngine:
         self.c = exploration_constant
         self.rng = random.Random(seed)
 
-        # Multi-armed bandit statistics for individual fault modes
         self.mode_trials: Dict[str, int] = {m.value: 0 for m in FaultMode if m != FaultMode.NONE}
         self.mode_violations: Dict[str, int] = {m.value: 0 for m in FaultMode if m != FaultMode.NONE}
 
-        # Multi-armed bandit statistics for specific (tool, mode) arms
         self.tool_mode_trials: Dict[str, int] = {}
         self.tool_mode_violations: Dict[str, int] = {}
 
-        # Multi-armed bandit statistics for pairwise fault combinations
         self.pair_trials: Dict[Tuple[str, str], int] = {}
         self.pair_violations: Dict[Tuple[str, str], int] = {}
 
     def _ucb_score(self, tool: str, mode: str, total_steps: int) -> float:
-        """Compute UCB1 value for a specific (tool, mode) fault arm."""
         key = f"{tool}:{mode}"
         trials = self.tool_mode_trials.get(key, 0)
         if trials == 0:
@@ -156,7 +284,6 @@ class AdaptiveSearchEngine:
         return success_rate + bonus
 
     def _ucb_pair_score(self, pair: Tuple[str, str], total_steps: int) -> float:
-        """Compute UCB1 value for a pairwise fault combination."""
         trials = self.pair_trials.get(pair, 0)
         if trials == 0:
             return float("inf")
@@ -165,26 +292,21 @@ class AdaptiveSearchEngine:
         return success_rate + bonus
 
     def select_mode_for_tool(self, tool: str, total_steps: int) -> FaultMode:
-        """Select fault mode using UCB with fallback to random exploration and random tie-breaking."""
         valid_modes = [m for m in FaultCatalog.get_valid_modes_for_tool(tool) if m != FaultMode.NONE]
-
-        # Epsilon-greedy exploration probability decaying slightly
         if self.rng.random() < 0.15:
             return self.rng.choice(valid_modes)
 
-        # UCB-guided selection with randomized tie-breaking
         self.rng.shuffle(valid_modes)
         scores = [(m, self._ucb_score(tool, m.value, total_steps)) for m in valid_modes]
         scores.sort(key=lambda x: x[1], reverse=True)
         return scores[0][0]
 
     def generate_candidate(self, scenario_id: str, step: int) -> ScenarioConfig:
-        """Generate feedback-guided candidate scenario prioritizing high-yield pairs and modes."""
         num_faults = self.rng.randint(1, self.max_faults)
         faults: List[FaultRule] = []
         used_slots: Set[Tuple[str, int]] = set()
 
-        # If multiple faults requested and we have discovered promising pairs, exploit them
+        # Exploit promising pairs if discovered
         if num_faults >= 2 and self.pair_violations and self.rng.random() < 0.6:
             promising_pairs = [p for p, v in self.pair_violations.items() if v > 0]
             if promising_pairs:
@@ -203,15 +325,12 @@ class AdaptiveSearchEngine:
                     except Exception:
                         pass
 
-        # For multi-fault exploration, prioritize testing interactions between distinct tools
         candidate_tools = list(FaultCatalog.SUPPORTED_TOOLS)
         self.rng.shuffle(candidate_tools)
-
         tool_idx = 0
         while len(faults) < num_faults and len(used_slots) < 4:
             tool = candidate_tools[tool_idx % len(candidate_tools)]
             tool_idx += 1
-            # Primary occurrence is 1 (where state interactions initiate)
             occ = 1 if self.rng.random() < 0.75 else 2
             slot = (tool, occ)
             if slot in used_slots:
@@ -230,11 +349,33 @@ class AdaptiveSearchEngine:
             faults=faults,
         )
 
+    def record_feedback(self, faults: List[FaultRule], violation_occurred: bool) -> None:
+        """Update multi-armed bandit statistics based on experiment observation."""
+        for f in faults:
+            tm_key = f"{f.tool}:{f.mode.value}"
+            self.tool_mode_trials[tm_key] = self.tool_mode_trials.get(tm_key, 0) + 1
+            if violation_occurred:
+                self.tool_mode_violations[tm_key] = self.tool_mode_violations.get(tm_key, 0) + 1
+
+        modes_in_cand = {f.mode.value for f in faults}
+        for m in modes_in_cand:
+            self.mode_trials[m] = self.mode_trials.get(m, 0) + 1
+            if violation_occurred:
+                self.mode_violations[m] = self.mode_violations.get(m, 0) + 1
+
+        sigs = [f.signature() for f in faults]
+        for i in range(len(sigs)):
+            for j in range(i + 1, len(sigs)):
+                pair = (min(sigs[i], sigs[j]), max(sigs[i], sigs[j]))
+                self.pair_trials[pair] = self.pair_trials.get(pair, 0) + 1
+                if violation_occurred:
+                    self.pair_violations[pair] = self.pair_violations.get(pair, 0) + 1
+
     def run(self, budget: int) -> SearchResult:
-        """Execute adaptive search over fixed experiment budget."""
         discovered: List[ScenarioConfig] = []
         reports: List[EvaluationReport] = []
         history: List[Dict[str, Any]] = []
+        raw_experiments: List[Dict[str, Any]] = []
         first_discovery: Optional[int] = None
         seen_violations: Set[str] = set()
 
@@ -254,44 +395,32 @@ class AdaptiveSearchEngine:
                 pass
 
             rep = evaluate_scenario(controller, agent_result, cand)
+            viol_names = [v.invariant_name for v in rep.violations]
 
-            # Update bandit feedback statistics
-            violation_occurred = rep.safety_violation
+            self.record_feedback(cand.faults, rep.safety_violation)
 
-            # 1. Update tool-mode specific statistics
-            for f in cand.faults:
-                tm_key = f"{f.tool}:{f.mode.value}"
-                self.tool_mode_trials[tm_key] = self.tool_mode_trials.get(tm_key, 0) + 1
-                if violation_occurred:
-                    self.tool_mode_violations[tm_key] = self.tool_mode_violations.get(tm_key, 0) + 1
+            raw_experiments.append({
+                "step": step,
+                "strategy": "adaptive_ucb",
+                "scenario_id": cand.id,
+                "faults": [f.signature() for f in cand.faults],
+                "violation": rep.safety_violation,
+                "violations": viol_names,
+                "refund_count": rep.refund_count,
+                "service_calls": rep.service_calls,
+            })
 
-            # 2. Update single mode statistics
-            modes_in_cand = set(f.mode.value for f in cand.faults)
-            for m in modes_in_cand:
-                self.mode_trials[m] = self.mode_trials.get(m, 0) + 1
-                if violation_occurred:
-                    self.mode_violations[m] = self.mode_violations.get(m, 0) + 1
-
-            # 3. Update pairwise combination statistics
-            sigs = [f.signature() for f in cand.faults]
-            for i in range(len(sigs)):
-                for j in range(i + 1, len(sigs)):
-                    pair = (min(sigs[i], sigs[j]), max(sigs[i], sigs[j]))
-                    self.pair_trials[pair] = self.pair_trials.get(pair, 0) + 1
-                    if violation_occurred:
-                        self.pair_violations[pair] = self.pair_violations.get(pair, 0) + 1
-
-            if violation_occurred:
+            if rep.safety_violation:
                 if first_discovery is None:
                     first_discovery = step
-                v_sig = "-".join(sorted(v.invariant_name for v in rep.violations))
+                v_sig = "-".join(sorted(viol_names))
                 seen_violations.add(v_sig)
                 discovered.append(cand)
                 reports.append(rep)
                 history.append({
                     "step": step,
                     "scenario_id": cand.id,
-                    "violations": [v.invariant_name for v in rep.violations],
+                    "violations": viol_names,
                     "faults": [f.signature() for f in cand.faults],
                 })
 
@@ -311,6 +440,128 @@ class AdaptiveSearchEngine:
             discovered_scenarios=discovered,
             reports=reports,
             discovery_history=history,
+            raw_experiments=raw_experiments,
             mode_yield_stats=yield_stats,
             pair_yield_stats=pair_stats,
+            strategy="adaptive_ucb",
+        )
+
+
+class HybridSearchEngine:
+    """Hybrid search combining Pairwise Combinatorial coverage with Adaptive UCB1.
+
+    Maintains systematic combinatorial 2-way interaction coverage while updating
+    and exploiting multi-armed bandit weights whenever failure-inducing conditions appear.
+    """
+
+    def __init__(
+        self,
+        agent: BaseAgent,
+        max_faults_per_scenario: int = 3,
+        exploration_constant: float = 1.414,
+        combinatorial_ratio: float = 0.4,
+        seed: Optional[int] = None,
+    ):
+        self.agent = agent
+        self.max_faults = max_faults_per_scenario
+        self.combinatorial_ratio = combinatorial_ratio
+        self.rng = random.Random(seed)
+
+        self.adaptive_engine = AdaptiveSearchEngine(
+            agent=agent,
+            max_faults_per_scenario=max_faults_per_scenario,
+            exploration_constant=exploration_constant,
+            seed=seed,
+        )
+        self.combinatorial_engine = PairwiseCombinatorialSearchEngine(
+            agent=agent,
+            max_faults_per_scenario=2,
+            seed=seed,
+        )
+
+    def generate_candidate(self, scenario_id: str, step: int) -> ScenarioConfig:
+        if self.rng.random() < self.combinatorial_ratio:
+            cand = self.combinatorial_engine.generate_candidate(scenario_id)
+        else:
+            cand = self.adaptive_engine.generate_candidate(scenario_id, step)
+        return cand
+
+    def run(self, budget: int) -> SearchResult:
+        discovered: List[ScenarioConfig] = []
+        reports: List[EvaluationReport] = []
+        history: List[Dict[str, Any]] = []
+        raw_experiments: List[Dict[str, Any]] = []
+        first_discovery: Optional[int] = None
+        seen_violations: Set[str] = set()
+
+        for step in range(1, budget + 1):
+            cand = self.generate_candidate(f"hybrid-{step:04d}", step)
+            controller = EnvironmentController(config=cand)
+            service = RefundService(controller=controller)
+
+            agent_result = None
+            try:
+                agent_result = self.agent.run(
+                    service=service,
+                    order_id=cand.initial_state.order_id,
+                    amount=cand.initial_state.order_amount,
+                )
+            except Exception:
+                pass
+
+            rep = evaluate_scenario(controller, agent_result, cand)
+            viol_names = [v.invariant_name for v in rep.violations]
+
+            # Update the bandit model with feedback from this trial
+            self.adaptive_engine.record_feedback(cand.faults, rep.safety_violation)
+
+            raw_experiments.append({
+                "step": step,
+                "strategy": "hybrid_adaptive_combinatorial",
+                "scenario_id": cand.id,
+                "faults": [f.signature() for f in cand.faults],
+                "violation": rep.safety_violation,
+                "violations": viol_names,
+                "refund_count": rep.refund_count,
+                "service_calls": rep.service_calls,
+            })
+
+            if rep.safety_violation:
+                if first_discovery is None:
+                    first_discovery = step
+                v_sig = "-".join(sorted(viol_names))
+                seen_violations.add(v_sig)
+                discovered.append(cand)
+                reports.append(rep)
+                history.append({
+                    "step": step,
+                    "scenario_id": cand.id,
+                    "violations": viol_names,
+                    "faults": [f.signature() for f in cand.faults],
+                })
+
+        yield_stats = {
+            m: {"trials": self.adaptive_engine.mode_trials[m], "violations": self.adaptive_engine.mode_violations[m]}
+            for m in self.adaptive_engine.mode_trials
+        }
+        pair_stats = {
+            f"{p[0]} + {p[1]}": {
+                "trials": self.adaptive_engine.pair_trials[p],
+                "violations": self.adaptive_engine.pair_violations.get(p, 0),
+            }
+            for p in self.adaptive_engine.pair_trials
+            if self.adaptive_engine.pair_violations.get(p, 0) > 0
+        }
+
+        return SearchResult(
+            total_experiments=budget,
+            unique_violations_found=len(seen_violations),
+            first_discovery_step=first_discovery,
+            discovered_scenarios=discovered,
+            reports=reports,
+            discovery_history=history,
+            raw_experiments=raw_experiments,
+            mode_yield_stats=yield_stats,
+            pair_yield_stats=pair_stats,
+            strategy="hybrid_adaptive_combinatorial",
         )

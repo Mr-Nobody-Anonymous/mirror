@@ -1,9 +1,9 @@
 """Tests for regression artifact generation, loading, and replay execution."""
 
 from pathlib import Path
-import pytest
-from mirror.models import FaultMode, FaultRule, InitialState, RegressionArtifact
+
 from mirror.agent import NaiveRefundAgent, RobustRefundAgent
+from mirror.models import FaultMode, FaultRule, InitialState, RegressionArtifact
 from mirror.regression import (
     RegressionRunner,
     load_regression_artifact,

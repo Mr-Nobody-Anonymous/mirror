@@ -1,0 +1,33 @@
+id: reproduced_regression_artifact
+task: refund_order
+initial_state:
+  order_id: ORD-104
+  order_amount: 100
+  refund_count: 0
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+  metadata: {}
+faults:
+- tool: payment.refund
+  occurrence: 1
+  mode: timeout_after_commit
+  parameters: {}
+- tool: payment.get_order_status
+  occurrence: 1
+  mode: stale_read
+  parameters: {}
+invariants:
+- refund_count <= 1
+- ledger_matches_agent
+- permission_respected
+- amount_conservation
+expected:
+  reproduction: true
+  violation: duplicate_refund
+minimal: true
+discovered_at: 1792083174.9789364
+metadata:
+  reproduced_at: 1792083174.9789364
+  minimization_evaluations: 27
+  reduction_percentage: 50.0

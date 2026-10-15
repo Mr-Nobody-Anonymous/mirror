@@ -1,0 +1,5 @@
+Strategy,FirstDiscoveryMean,FirstDiscoveryStderr,FailuresFoundMean,FailuresFoundStderr,DiscoveryRateMean,CostCallsMean
+random,19.0,4.82,0.8,0.37,2.67,12015.0
+pairwise,23.8,5.48,0.4,0.24,1.33,18012.0
+adaptive,2.8,1.32,6.6,0.68,22.0,4.72
+hybrid,7.4,5.42,4.6,0.68,15.33,7.6

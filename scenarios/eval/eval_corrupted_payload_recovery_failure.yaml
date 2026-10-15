@@ -1,0 +1,32 @@
+id: eval_corrupted_payload_recovery_failure_005
+task: refund_order
+category: eval
+initial_state:
+  order_id: ORD-EVAL-505
+  order_amount: 100
+  refund_count: 0
+  tenant_id: tenant-eval-05
+  customer_id: cust-eval-05
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+faults:
+  - tool: payment.refund
+    occurrence: 1
+    mode: timeout_after_commit
+    parameters: {}
+  - tool: payment.get_order_status
+    occurrence: 1
+    mode: corrupted_response
+    parameters: {}
+invariants:
+  - refund_count <= 1
+  - ledger_matches_agent
+  - amount_conservation
+expected:
+  reproduction: true
+  violation: duplicate_refund
+minimal: true
+metadata:
+  held_out: true
+  description: "Held-out evaluation scenario: Timeout after refund commit combined with corrupted JSON payload from status check, triggering unhedged retry."

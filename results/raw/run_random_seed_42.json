@@ -1,0 +1,384 @@
+[
+  {
+    "step": 1,
+    "strategy": "random",
+    "scenario_id": "rand-0001",
+    "faults": [
+      "payment.refund#1:corrupted_response",
+      "payment.get_order_status#1:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 2,
+    "strategy": "random",
+    "scenario_id": "rand-0002",
+    "faults": [
+      "payment.refund#2:timeout_after_commit",
+      "payment.refund#1:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 4
+  },
+  {
+    "step": 3,
+    "strategy": "random",
+    "scenario_id": "rand-0003",
+    "faults": [
+      "payment.refund#2:timeout_before_commit",
+      "payment.get_order_status#2:stale_read"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 4,
+    "strategy": "random",
+    "scenario_id": "rand-0004",
+    "faults": [
+      "payment.get_order_status#1:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 5,
+    "strategy": "random",
+    "scenario_id": "rand-0005",
+    "faults": [
+      "payment.get_order_status#1:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 6,
+    "strategy": "random",
+    "scenario_id": "rand-0006",
+    "faults": [
+      "payment.get_order_status#1:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 7,
+    "strategy": "random",
+    "scenario_id": "rand-0007",
+    "faults": [
+      "payment.refund#2:corrupted_response",
+      "payment.get_order_status#1:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 8,
+    "strategy": "random",
+    "scenario_id": "rand-0008",
+    "faults": [
+      "payment.refund#1:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 9,
+    "strategy": "random",
+    "scenario_id": "rand-0009",
+    "faults": [
+      "payment.refund#1:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 0,
+    "service_calls": 1
+  },
+  {
+    "step": 10,
+    "strategy": "random",
+    "scenario_id": "rand-0010",
+    "faults": [
+      "payment.get_order_status#2:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 11,
+    "strategy": "random",
+    "scenario_id": "rand-0011",
+    "faults": [
+      "payment.get_order_status#1:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 12,
+    "strategy": "random",
+    "scenario_id": "rand-0012",
+    "faults": [
+      "payment.refund#1:timeout_before_commit",
+      "payment.get_order_status#2:server_error",
+      "payment.refund#2:timeout_after_commit"
+    ],
+    "violation": true,
+    "violations": [
+      "silent_mutation"
+    ],
+    "refund_count": 1,
+    "service_calls": 4
+  },
+  {
+    "step": 13,
+    "strategy": "random",
+    "scenario_id": "rand-0013",
+    "faults": [
+      "payment.refund#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 14,
+    "strategy": "random",
+    "scenario_id": "rand-0014",
+    "faults": [
+      "payment.refund#1:rate_limited",
+      "payment.get_order_status#1:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 15,
+    "strategy": "random",
+    "scenario_id": "rand-0015",
+    "faults": [
+      "payment.get_order_status#2:timeout_before_commit",
+      "payment.get_order_status#1:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 16,
+    "strategy": "random",
+    "scenario_id": "rand-0016",
+    "faults": [
+      "payment.get_order_status#2:permission_revoked",
+      "payment.refund#1:rate_limited"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 17,
+    "strategy": "random",
+    "scenario_id": "rand-0017",
+    "faults": [
+      "payment.refund#1:timeout_after_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 18,
+    "strategy": "random",
+    "scenario_id": "rand-0018",
+    "faults": [
+      "payment.get_order_status#1:rate_limited",
+      "payment.get_order_status#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 19,
+    "strategy": "random",
+    "scenario_id": "rand-0019",
+    "faults": [
+      "payment.refund#2:corrupted_response",
+      "payment.get_order_status#1:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 20,
+    "strategy": "random",
+    "scenario_id": "rand-0020",
+    "faults": [
+      "payment.refund#2:rate_limited",
+      "payment.refund#1:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 21,
+    "strategy": "random",
+    "scenario_id": "rand-0021",
+    "faults": [
+      "payment.refund#1:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 22,
+    "strategy": "random",
+    "scenario_id": "rand-0022",
+    "faults": [
+      "payment.get_order_status#2:stale_read",
+      "payment.refund#2:server_error",
+      "payment.refund#1:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 0,
+    "service_calls": 3
+  },
+  {
+    "step": 23,
+    "strategy": "random",
+    "scenario_id": "rand-0023",
+    "faults": [
+      "payment.refund#1:corrupted_response",
+      "payment.get_order_status#1:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 24,
+    "strategy": "random",
+    "scenario_id": "rand-0024",
+    "faults": [
+      "payment.get_order_status#1:server_error",
+      "payment.refund#2:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 25,
+    "strategy": "random",
+    "scenario_id": "rand-0025",
+    "faults": [
+      "payment.get_order_status#2:permission_revoked",
+      "payment.get_order_status#1:timeout_before_commit",
+      "payment.refund#1:server_error"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 26,
+    "strategy": "random",
+    "scenario_id": "rand-0026",
+    "faults": [
+      "payment.refund#1:timeout_after_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 27,
+    "strategy": "random",
+    "scenario_id": "rand-0027",
+    "faults": [
+      "payment.refund#1:timeout_after_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 2
+  },
+  {
+    "step": 28,
+    "strategy": "random",
+    "scenario_id": "rand-0028",
+    "faults": [
+      "payment.get_order_status#1:permission_revoked"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 29,
+    "strategy": "random",
+    "scenario_id": "rand-0029",
+    "faults": [
+      "payment.get_order_status#2:timeout_before_commit"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  },
+  {
+    "step": 30,
+    "strategy": "random",
+    "scenario_id": "rand-0030",
+    "faults": [
+      "payment.refund#2:timeout_before_commit",
+      "payment.get_order_status#2:timeout_before_commit",
+      "payment.refund#1:corrupted_response"
+    ],
+    "violation": false,
+    "violations": [],
+    "refund_count": 1,
+    "service_calls": 1
+  }
+]

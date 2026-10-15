@@ -1,0 +1,32 @@
+id: eval_cascading_timeout_stale_retry_001
+task: refund_order
+category: eval
+initial_state:
+  order_id: ORD-EVAL-101
+  order_amount: 150
+  refund_count: 0
+  tenant_id: tenant-eval-01
+  customer_id: cust-eval-01
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+faults:
+  - tool: payment.refund
+    occurrence: 1
+    mode: timeout_after_commit
+    parameters: {}
+  - tool: payment.get_order_status
+    occurrence: 1
+    mode: stale_read
+    parameters: {}
+invariants:
+  - refund_count <= 1
+  - ledger_matches_agent
+  - amount_conservation
+expected:
+  reproduction: true
+  violation: duplicate_refund
+minimal: true
+metadata:
+  held_out: true
+  description: "Held-out evaluation scenario: Cascading timeout followed by stale read status query leading to duplicate refund."
