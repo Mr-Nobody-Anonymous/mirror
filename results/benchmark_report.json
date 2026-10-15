@@ -1,0 +1,32 @@
+{
+  "random_search": {
+    "avg_first_discovery_step": 11.67,
+    "avg_unique_violations": 1.0,
+    "avg_total_failures_found": 3.33,
+    "discovery_rate_pct": 11.11,
+    "cost_per_discovery_calls": 9.0
+  },
+  "manual_baseline": {
+    "scenarios_evaluated": 4,
+    "violations_discovered": 1,
+    "discovery_efficiency_pct": 25.0
+  },
+  "delta_debugging": {
+    "original_fault_count": 3,
+    "minimized_fault_count": 1,
+    "reduction_percentage": 66.67,
+    "evaluations_to_minimize": 4,
+    "is_strictly_1_minimal": true
+  },
+  "adaptive_engine": {
+    "avg_first_discovery_step": 3.0,
+    "avg_unique_violations": 1.0,
+    "avg_total_failures_found": 5.0,
+    "discovery_rate_pct": 16.67,
+    "cost_per_discovery_calls": 6.0,
+    "reproduction_rate_pct": 100.0,
+    "fix_verification_pass_rate_pct": 100.0,
+    "false_positive_rate_pct": 0.0,
+    "generated_artifacts_count": 3
+  }
+}

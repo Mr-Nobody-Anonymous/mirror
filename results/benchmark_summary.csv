@@ -1,0 +1,4 @@
+Method,FirstDiscoveryStep,TotalFailuresFound,DiscoveryEfficiency,CostPerDiscovery
+RandomSearch,11.67,3.33,11.11%,9.0
+ManualBaseline,N/A,1,25.0%,N/A
+MIRROR_Adaptive,3.0,5.0,16.67%,6.0

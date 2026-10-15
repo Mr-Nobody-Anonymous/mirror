@@ -1,0 +1,22 @@
+id: regression_seed_101
+task: refund_order
+initial_state:
+  order_id: ORD-104
+  order_amount: 100
+  refund_count: 0
+faults:
+- tool: payment.refund
+  occurrence: 1
+  mode: timeout_after_commit
+invariants:
+- refund_count <= 1
+- ledger_matches_agent
+- permission_respected
+expected:
+  reproduction: true
+  violation: duplicate_refund
+minimal: true
+discovered_at: 1792073147.003474
+metadata:
+  seed: 101
+  discovered_by: AdaptiveSearchEngine
