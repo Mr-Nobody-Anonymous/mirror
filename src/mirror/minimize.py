@@ -32,7 +32,10 @@ class MinimizationReport(BaseModel):
     evaluations_count: int = 0
     tested_removals: List[Dict[str, Any]] = Field(default_factory=list)
     is_1_minimal: bool = False
+    is_global_minimal_guaranteed: bool = False  # Explicit: ddmin guarantees local 1-minimality, not global minimality
     repeatability_validated: bool = False
+    reproduction_probability: float = 1.0
+    nondeterministic_handling: bool = False
     minimal_reproducer: str = ""
     causal_explanation: str = ""
     root_cause_distinction: Dict[str, str] = Field(default_factory=dict)
@@ -41,8 +44,9 @@ class MinimizationReport(BaseModel):
     def summary(self) -> str:
         rep_status = "VALIDATED" if self.repeatability_validated else "UNVALIDATED"
         min_status = "1-MINIMAL" if self.is_1_minimal else "SUB-OPTIMAL"
+        prob_str = f" [p={self.reproduction_probability:.2f}]" if self.nondeterministic_handling else ""
         return (
-            f"[{min_status}|{rep_status}] {self.original_fault_count} -> {self.minimized_fault_count} faults "
+            f"[{min_status}|{rep_status}{prob_str}] {self.original_fault_count} -> {self.minimized_fault_count} faults "
             f"({self.reduction_pct}% reduction) in {self.evaluations_count} evaluations"
         )
 
@@ -59,10 +63,14 @@ class ScenarioMinimizer:
         agent: BaseAgent,
         target_violation_type: Optional[str] = "duplicate_refund",
         max_evaluations: int = 100,
+        eval_trials: int = 1,
+        reproduction_threshold: float = 1.0,
     ):
         self.agent = agent
         self.target_violation_type = target_violation_type
         self.max_evaluations = max_evaluations
+        self.eval_trials = max(1, eval_trials)
+        self.reproduction_threshold = reproduction_threshold
         self.evaluation_count = 0
         self.tested_removals: List[Dict[str, Any]] = []
 
@@ -70,34 +78,47 @@ class ScenarioMinimizer:
         self,
         base_scenario: ScenarioConfig,
         candidate_faults: List[FaultRule],
+        trials: Optional[int] = None,
     ) -> Tuple[bool, EvaluationReport]:
-        """Execute agent with candidate faults and test if target invariant violation occurs."""
-        self.evaluation_count += 1
-        test_cfg = copy.deepcopy(base_scenario)
-        test_cfg.faults = candidate_faults
+        """Execute agent with candidate faults and test if target invariant violation occurs.
 
-        controller = EnvironmentController(config=test_cfg)
-        service = RefundService(controller=controller, order_id=test_cfg.initial_state.order_id)
+        Supports repeated sampling trials to handle nondeterministic / probabilistic failures.
+        """
+        n_trials = trials or self.eval_trials
+        positive_runs = 0
+        last_report: Optional[EvaluationReport] = None
 
-        agent_result = None
-        try:
-            agent_result = self.agent.run(
-                service=service,
-                order_id=test_cfg.initial_state.order_id,
-                amount=test_cfg.initial_state.order_amount,
-            )
-        except Exception:
-            # Exceptions may be part of the failure sequence
-            pass
+        for _ in range(n_trials):
+            self.evaluation_count += 1
+            test_cfg = copy.deepcopy(base_scenario)
+            test_cfg.faults = candidate_faults
 
-        report = evaluate_scenario(controller, agent_result, test_cfg)
+            controller = EnvironmentController(config=test_cfg)
+            service = RefundService(controller=controller, order_id=test_cfg.initial_state.order_id)
 
-        if not report.safety_violation:
-            reproduced = False
-        elif self.target_violation_type:
-            reproduced = any(v.invariant_name == self.target_violation_type for v in report.violations)
-        else:
-            reproduced = True
+            agent_result = None
+            try:
+                agent_result = self.agent.run(
+                    service=service,
+                    order_id=test_cfg.initial_state.order_id,
+                    amount=test_cfg.initial_state.order_amount,
+                )
+            except Exception:
+                pass
+
+            last_report = evaluate_scenario(controller, agent_result, test_cfg)
+            if not last_report.safety_violation:
+                run_success = False
+            elif self.target_violation_type:
+                run_success = any(v.invariant_name == self.target_violation_type for v in last_report.violations)
+            else:
+                run_success = True
+
+            if run_success:
+                positive_runs += 1
+
+        prob = positive_runs / n_trials
+        reproduced = prob >= self.reproduction_threshold
 
         removed_sigs = [
             f.signature() for f in base_scenario.faults if f not in candidate_faults
@@ -108,10 +129,12 @@ class ScenarioMinimizer:
             "candidate_signatures": [f.signature() for f in candidate_faults],
             "removed_signatures": removed_sigs,
             "reproduced": reproduced,
-            "violations": [v.invariant_name for v in report.violations],
+            "reproduction_probability": prob,
+            "trials_run": n_trials,
+            "violations": [v.invariant_name for v in (last_report.violations if last_report else [])],
         })
 
-        return reproduced, report
+        return reproduced, (last_report or EvaluationReport(scenario_id=base_scenario.id))
 
     def minimize(
         self,
@@ -280,6 +303,11 @@ class ScenarioMinimizer:
             "minimal_reproducer": minimal_reproducer_str,
             "causal_explanation": causal_expl,
             "software_root_cause": sw_root_cause,
+            "global_vs_local_minimality": (
+                "ddmin guarantees local 1-minimality under the tested conditions (removing any single fault "
+                "stops failure reproduction), but does NOT guarantee global minimality across the full powerset "
+                "nor that other disjoint minimal sets do not exist."
+            ),
         }
 
         budget_exceeded = self.evaluation_count >= self.max_evaluations
@@ -293,7 +321,9 @@ class ScenarioMinimizer:
             evaluations_count=self.evaluation_count,
             tested_removals=list(self.tested_removals),
             is_1_minimal=is_1_minimal,
+            is_global_minimal_guaranteed=False,
             repeatability_validated=repeatability_validated,
+            nondeterministic_handling=(self.eval_trials > 1),
             minimal_reproducer=minimal_reproducer_str,
             causal_explanation=causal_expl,
             root_cause_distinction=root_cause_distinction,

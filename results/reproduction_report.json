@@ -1,208 +1,272 @@
 {
   "metadata": {
-    "timestamp": 1792083174.9880903,
+    "timestamp": 1792094468.8981967,
     "seeds": [
       42,
       101,
-      2024,
-      777,
-      9999
+      2024
     ],
-    "budget_per_run": 30,
-    "experiment_count_total": 600
+    "budget_per_run": 15,
+    "experiment_count_total": 180,
+    "experimental_protocol": {
+      "experiment_definition": "One complete execution of an agent against the environment with a candidate fault injection configuration.",
+      "discovery_definition": "An experiment that triggers one or more formal safety invariant violations against the authoritative state ledger.",
+      "failure_count_definition": "Count of executed candidate configurations resulting in safety invariant breaches.",
+      "unique_violations_definition": "Distinct invariant names (e.g. duplicate_refund, balance_exceeded) breached.",
+      "unique_configurations_definition": "Distinct fault combinations that trigger violations.",
+      "discovery_yield_rate_formula": "(Failures Found / Experiment Budget) * 100%",
+      "search_cost_formula": "Experiment Budget / Failures Found (simulation calls per discovery)"
+    }
   },
   "search_strategies": {
     "random": {
       "name": "Random Search",
       "first_discovery_step": {
-        "n": 5,
-        "mean": 19.0,
-        "std_dev": 10.77,
-        "stderr": 4.82,
-        "ci_95_low": 9.56,
-        "ci_95_high": 28.44,
-        "formatted": "19.00 +/- 4.82 [9.56, 28.44]"
+        "n": 3,
+        "mean": 11.0,
+        "std_dev": 4.58,
+        "stderr": 2.65,
+        "ci_95_low": 5.81,
+        "ci_95_high": 16.19,
+        "formatted": "11.00 +/- 2.65 [5.81, 16.19]"
       },
       "total_failures": {
-        "n": 5,
-        "mean": 0.8,
-        "std_dev": 0.84,
-        "stderr": 0.37,
-        "ci_95_low": 0.07,
-        "ci_95_high": 1.53,
-        "formatted": "0.80 +/- 0.37 [0.07, 1.53]"
+        "n": 3,
+        "mean": 0.67,
+        "std_dev": 0.58,
+        "stderr": 0.33,
+        "ci_95_low": 0.01,
+        "ci_95_high": 1.32,
+        "formatted": "0.67 +/- 0.33 [0.01, 1.32]"
       },
       "unique_violations": {
-        "n": 5,
-        "mean": 0.6,
-        "std_dev": 0.55,
-        "stderr": 0.24,
-        "ci_95_low": 0.12,
-        "ci_95_high": 1.08,
-        "formatted": "0.60 +/- 0.24 [0.12, 1.08]"
+        "n": 3,
+        "mean": 0.67,
+        "std_dev": 0.58,
+        "stderr": 0.33,
+        "ci_95_low": 0.01,
+        "ci_95_high": 1.32,
+        "formatted": "0.67 +/- 0.33 [0.01, 1.32]"
       },
       "discovery_rate_pct": {
-        "n": 5,
-        "mean": 2.67,
-        "std_dev": 2.79,
-        "stderr": 1.25,
-        "ci_95_low": 0.22,
-        "ci_95_high": 5.11,
-        "formatted": "2.67 +/- 1.25 [0.22, 5.11]"
+        "n": 3,
+        "mean": 4.44,
+        "std_dev": 3.85,
+        "stderr": 2.22,
+        "ci_95_low": 0.09,
+        "ci_95_high": 8.8,
+        "formatted": "4.44 +/- 2.22 [0.09, 8.80]"
       },
       "cost_per_discovery_calls": {
-        "n": 5,
-        "mean": 12015.0,
-        "std_dev": 16417.98,
-        "stderr": 7342.35,
+        "n": 3,
+        "mean": 5010.0,
+        "std_dev": 8651.59,
+        "stderr": 4995.0,
         "ci_95_low": 0.0,
-        "ci_95_high": 26406.0,
-        "formatted": "12015.00 +/- 7342.35 [0.00, 26406.00]"
+        "ci_95_high": 14800.2,
+        "formatted": "5010.00 +/- 4995.00 [0.00, 14800.20]"
       }
     },
     "pairwise": {
       "name": "Pairwise Combinatorial",
       "first_discovery_step": {
-        "n": 5,
-        "mean": 23.8,
-        "std_dev": 12.26,
-        "stderr": 5.48,
-        "ci_95_low": 13.06,
-        "ci_95_high": 34.54,
-        "formatted": "23.80 +/- 5.48 [13.06, 34.54]"
+        "n": 3,
+        "mean": 15.0,
+        "std_dev": 0.0,
+        "stderr": 0.0,
+        "ci_95_low": 15.0,
+        "ci_95_high": 15.0,
+        "formatted": "15.00 +/- 0.00 [15.00, 15.00]"
       },
       "total_failures": {
-        "n": 5,
-        "mean": 0.4,
-        "std_dev": 0.55,
-        "stderr": 0.24,
+        "n": 3,
+        "mean": 0.0,
+        "std_dev": 0.0,
+        "stderr": 0.0,
         "ci_95_low": 0.0,
-        "ci_95_high": 0.88,
-        "formatted": "0.40 +/- 0.24 [0.00, 0.88]"
+        "ci_95_high": 0.0,
+        "formatted": "0.00 +/- 0.00 [0.00, 0.00]"
       },
       "unique_violations": {
-        "n": 5,
-        "mean": 0.4,
-        "std_dev": 0.55,
-        "stderr": 0.24,
+        "n": 3,
+        "mean": 0.0,
+        "std_dev": 0.0,
+        "stderr": 0.0,
         "ci_95_low": 0.0,
-        "ci_95_high": 0.88,
-        "formatted": "0.40 +/- 0.24 [0.00, 0.88]"
+        "ci_95_high": 0.0,
+        "formatted": "0.00 +/- 0.00 [0.00, 0.00]"
       },
       "discovery_rate_pct": {
-        "n": 5,
-        "mean": 1.33,
-        "std_dev": 1.83,
-        "stderr": 0.82,
+        "n": 3,
+        "mean": 0.0,
+        "std_dev": 0.0,
+        "stderr": 0.0,
         "ci_95_low": 0.0,
-        "ci_95_high": 2.93,
-        "formatted": "1.33 +/- 0.82 [0.00, 2.93]"
+        "ci_95_high": 0.0,
+        "formatted": "0.00 +/- 0.00 [0.00, 0.00]"
       },
       "cost_per_discovery_calls": {
-        "n": 5,
-        "mean": 18012.0,
-        "std_dev": 16415.25,
-        "stderr": 7341.12,
-        "ci_95_low": 3623.4,
-        "ci_95_high": 32400.6,
-        "formatted": "18012.00 +/- 7341.12 [3623.40, 32400.60]"
+        "n": 3,
+        "mean": 15000.0,
+        "std_dev": 0.0,
+        "stderr": 0.0,
+        "ci_95_low": 15000.0,
+        "ci_95_high": 15000.0,
+        "formatted": "15000.00 +/- 0.00 [15000.00, 15000.00]"
       }
     },
     "adaptive": {
       "name": "Adaptive UCB",
       "first_discovery_step": {
-        "n": 5,
-        "mean": 2.8,
-        "std_dev": 2.95,
-        "stderr": 1.32,
-        "ci_95_low": 0.21,
-        "ci_95_high": 5.39,
-        "formatted": "2.80 +/- 1.32 [0.21, 5.39]"
+        "n": 3,
+        "mean": 1.33,
+        "std_dev": 0.58,
+        "stderr": 0.33,
+        "ci_95_low": 0.68,
+        "ci_95_high": 1.99,
+        "formatted": "1.33 +/- 0.33 [0.68, 1.99]"
       },
       "total_failures": {
-        "n": 5,
-        "mean": 6.6,
-        "std_dev": 1.52,
-        "stderr": 0.68,
-        "ci_95_low": 5.27,
-        "ci_95_high": 7.93,
-        "formatted": "6.60 +/- 0.68 [5.27, 7.93]"
+        "n": 3,
+        "mean": 4.0,
+        "std_dev": 1.0,
+        "stderr": 0.58,
+        "ci_95_low": 2.87,
+        "ci_95_high": 5.13,
+        "formatted": "4.00 +/- 0.58 [2.87, 5.13]"
       },
       "unique_violations": {
-        "n": 5,
-        "mean": 2.0,
-        "std_dev": 0.71,
-        "stderr": 0.32,
-        "ci_95_low": 1.38,
-        "ci_95_high": 2.62,
-        "formatted": "2.00 +/- 0.32 [1.38, 2.62]"
+        "n": 3,
+        "mean": 1.0,
+        "std_dev": 0.0,
+        "stderr": 0.0,
+        "ci_95_low": 1.0,
+        "ci_95_high": 1.0,
+        "formatted": "1.00 +/- 0.00 [1.00, 1.00]"
       },
       "discovery_rate_pct": {
-        "n": 5,
-        "mean": 22.0,
-        "std_dev": 5.06,
-        "stderr": 2.26,
-        "ci_95_low": 17.57,
-        "ci_95_high": 26.43,
-        "formatted": "22.00 +/- 2.26 [17.57, 26.43]"
+        "n": 3,
+        "mean": 26.67,
+        "std_dev": 6.67,
+        "stderr": 3.85,
+        "ci_95_low": 19.12,
+        "ci_95_high": 34.21,
+        "formatted": "26.67 +/- 3.85 [19.12, 34.21]"
       },
       "cost_per_discovery_calls": {
-        "n": 5,
-        "mean": 4.72,
-        "std_dev": 0.99,
-        "stderr": 0.44,
-        "ci_95_low": 3.86,
-        "ci_95_high": 5.59,
-        "formatted": "4.72 +/- 0.44 [3.86, 5.59]"
+        "n": 3,
+        "mean": 3.92,
+        "std_dev": 1.01,
+        "stderr": 0.58,
+        "ci_95_low": 2.77,
+        "ci_95_high": 5.06,
+        "formatted": "3.92 +/- 0.58 [2.77, 5.06]"
       }
     },
     "hybrid": {
       "name": "Hybrid (Adaptive + Combinatorial)",
       "first_discovery_step": {
-        "n": 5,
-        "mean": 7.4,
-        "std_dev": 12.12,
-        "stderr": 5.42,
-        "ci_95_low": 0.0,
-        "ci_95_high": 18.02,
-        "formatted": "7.40 +/- 5.42 [0.00, 18.02]"
+        "n": 3,
+        "mean": 1.67,
+        "std_dev": 1.15,
+        "stderr": 0.67,
+        "ci_95_low": 0.36,
+        "ci_95_high": 2.97,
+        "formatted": "1.67 +/- 0.67 [0.36, 2.97]"
       },
       "total_failures": {
-        "n": 5,
-        "mean": 4.6,
-        "std_dev": 1.52,
-        "stderr": 0.68,
-        "ci_95_low": 3.27,
-        "ci_95_high": 5.93,
-        "formatted": "4.60 +/- 0.68 [3.27, 5.93]"
+        "n": 3,
+        "mean": 2.67,
+        "std_dev": 0.58,
+        "stderr": 0.33,
+        "ci_95_low": 2.01,
+        "ci_95_high": 3.32,
+        "formatted": "2.67 +/- 0.33 [2.01, 3.32]"
       },
       "unique_violations": {
-        "n": 5,
-        "mean": 1.4,
-        "std_dev": 0.55,
-        "stderr": 0.24,
-        "ci_95_low": 0.92,
-        "ci_95_high": 1.88,
-        "formatted": "1.40 +/- 0.24 [0.92, 1.88]"
+        "n": 3,
+        "mean": 1.0,
+        "std_dev": 0.0,
+        "stderr": 0.0,
+        "ci_95_low": 1.0,
+        "ci_95_high": 1.0,
+        "formatted": "1.00 +/- 0.00 [1.00, 1.00]"
       },
       "discovery_rate_pct": {
-        "n": 5,
-        "mean": 15.33,
-        "std_dev": 5.06,
-        "stderr": 2.26,
-        "ci_95_low": 10.9,
-        "ci_95_high": 19.76,
-        "formatted": "15.33 +/- 2.26 [10.90, 19.76]"
+        "n": 3,
+        "mean": 17.78,
+        "std_dev": 3.85,
+        "stderr": 2.22,
+        "ci_95_low": 13.42,
+        "ci_95_high": 22.13,
+        "formatted": "17.78 +/- 2.22 [13.42, 22.13]"
       },
       "cost_per_discovery_calls": {
-        "n": 5,
-        "mean": 7.6,
-        "std_dev": 4.16,
-        "stderr": 1.86,
-        "ci_95_low": 3.95,
-        "ci_95_high": 11.25,
-        "formatted": "7.60 +/- 1.86 [3.95, 11.25]"
+        "n": 3,
+        "mean": 5.83,
+        "std_dev": 1.44,
+        "stderr": 0.83,
+        "ci_95_low": 4.2,
+        "ci_95_high": 7.47,
+        "formatted": "5.83 +/- 0.83 [4.20, 7.47]"
       }
+    }
+  },
+  "ablation_study": {
+    "ablation_1_random_search": {
+      "name": "Random Search (No Minimization)",
+      "discovery_step": 12,
+      "failures_found": 1,
+      "final_fault_count": 3,
+      "is_1_minimal": false,
+      "regression_synthesized": false
+    },
+    "ablation_2_adaptive_without_minimization": {
+      "name": "Adaptive Search (No Minimization)",
+      "discovery_step": 1,
+      "failures_found": 3,
+      "final_fault_count": 3,
+      "is_1_minimal": false,
+      "regression_synthesized": false
+    },
+    "ablation_3_minimization_without_adaptive": {
+      "name": "Minimization (Without Adaptive Search)",
+      "discovery_step": 12,
+      "initial_fault_count": 3,
+      "final_fault_count": 3,
+      "reduction_pct": 0.0,
+      "is_1_minimal": false,
+      "regression_synthesized": false
+    },
+    "ablation_4_complete_pipeline": {
+      "name": "Complete Pipeline (Adaptive + Minimization + Regression)",
+      "discovery_step": 1,
+      "initial_fault_count": 3,
+      "final_fault_count": 2,
+      "reduction_pct": 33.33,
+      "is_1_minimal": true,
+      "regression_synthesized": true,
+      "discovery_reproduced": true,
+      "fix_verified": true
+    }
+  },
+  "negative_results": {
+    "negative_case_1_budget_starvation": {
+      "scenario": "Severe Budget Constraint on Multi-Fault Interaction",
+      "budget": 2,
+      "failures_found": 0,
+      "expected_outcome": "Fail to find interaction within B=2",
+      "observed_outcome": "No failure discovered (demonstrates search budget floor)",
+      "negative_result_confirmed": true
+    },
+    "negative_case_2_immune_agent": {
+      "scenario": "Adaptive Search against Hardened Robust Agent",
+      "budget": 15,
+      "failures_found": 0,
+      "false_positives": 0,
+      "expected_outcome": "0 failures found (0 false positives)",
+      "observed_outcome": "0 failures found (robust agent passes all injected conditions)",
+      "negative_result_confirmed": true
     }
   },
   "held_out_benchmark": {
@@ -218,6 +282,7 @@
         "vulnerable_violations": [
           "duplicate_refund",
           "balance_exceeded",
+          "amount_conservation",
           "state_inconsistency"
         ],
         "robust_passed": true,
@@ -253,6 +318,7 @@
         "vulnerable_violations": [
           "duplicate_refund",
           "balance_exceeded",
+          "amount_conservation",
           "state_inconsistency"
         ],
         "robust_passed": true,
@@ -275,6 +341,7 @@
     "reduction_pct": 50.0,
     "evaluations_count": 27,
     "is_1_minimal": true,
+    "is_global_minimal_guaranteed": false,
     "repeatability_validated": true,
     "minimal_reproducer": "1-Minimal Fault Set (2 faults): payment.refund#1:timeout_after_commit, payment.get_order_status#1:stale_read",
     "causal_explanation": "Environmental Fault Interaction: A network timeout after transaction commit hid successful execution; the agent's subsequent state query returned stale cached data indicating 0 transactions, leading the agent to issue an unhedged retry and duplicate commit.",

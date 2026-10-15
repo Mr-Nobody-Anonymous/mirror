@@ -38,6 +38,7 @@
     "violations": [
       "duplicate_refund",
       "balance_exceeded",
+      "amount_conservation",
       "state_inconsistency"
     ],
     "refund_count": 2,
@@ -132,6 +133,7 @@
     "violations": [
       "duplicate_refund",
       "balance_exceeded",
+      "amount_conservation",
       "state_inconsistency"
     ],
     "refund_count": 2,
@@ -195,210 +197,6 @@
     "faults": [
       "payment.get_order_status#1:server_error",
       "payment.get_order_status#2:permission_revoked"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 16,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0016",
-    "faults": [
-      "payment.refund#2:timeout_after_commit"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 17,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0017",
-    "faults": [
-      "payment.refund#1:timeout_before_commit",
-      "payment.get_order_status#1:rate_limited"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 3
-  },
-  {
-    "step": 18,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0018",
-    "faults": [
-      "payment.get_order_status#1:rate_limited"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 19,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0019",
-    "faults": [
-      "payment.refund#2:timeout_before_commit",
-      "payment.get_order_status#1:rate_limited"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 20,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0020",
-    "faults": [
-      "payment.get_order_status#1:corrupted_response",
-      "payment.refund#1:timeout_after_commit",
-      "payment.get_order_status#2:timeout_before_commit"
-    ],
-    "violation": true,
-    "violations": [
-      "duplicate_refund",
-      "balance_exceeded",
-      "state_inconsistency"
-    ],
-    "refund_count": 2,
-    "service_calls": 3
-  },
-  {
-    "step": 21,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0021",
-    "faults": [
-      "payment.refund#1:timeout_after_commit",
-      "payment.get_order_status#1:corrupted_response"
-    ],
-    "violation": true,
-    "violations": [
-      "duplicate_refund",
-      "balance_exceeded",
-      "state_inconsistency"
-    ],
-    "refund_count": 2,
-    "service_calls": 3
-  },
-  {
-    "step": 22,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0022",
-    "faults": [
-      "payment.refund#2:corrupted_response",
-      "payment.get_order_status#1:corrupted_response"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 23,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0023",
-    "faults": [
-      "payment.refund#1:corrupted_response"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 24,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0024",
-    "faults": [
-      "payment.refund#1:timeout_after_commit",
-      "payment.refund#2:timeout_after_commit"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 2
-  },
-  {
-    "step": 25,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0025",
-    "faults": [
-      "payment.get_order_status#1:permission_revoked",
-      "payment.get_order_status#2:timeout_before_commit"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 26,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0026",
-    "faults": [
-      "payment.refund#1:permission_revoked"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 0,
-    "service_calls": 1
-  },
-  {
-    "step": 27,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0027",
-    "faults": [
-      "payment.refund#1:timeout_after_commit",
-      "payment.get_order_status#1:server_error"
-    ],
-    "violation": true,
-    "violations": [
-      "duplicate_refund",
-      "balance_exceeded",
-      "state_inconsistency"
-    ],
-    "refund_count": 2,
-    "service_calls": 3
-  },
-  {
-    "step": 28,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0028",
-    "faults": [
-      "payment.refund#2:timeout_after_commit"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 1,
-    "service_calls": 1
-  },
-  {
-    "step": 29,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0029",
-    "faults": [
-      "payment.refund#1:rate_limited",
-      "payment.get_order_status#1:server_error",
-      "payment.refund#2:rate_limited"
-    ],
-    "violation": false,
-    "violations": [],
-    "refund_count": 0,
-    "service_calls": 2
-  },
-  {
-    "step": 30,
-    "strategy": "hybrid_adaptive_combinatorial",
-    "scenario_id": "hybrid-0030",
-    "faults": [
-      "payment.get_order_status#1:permission_revoked",
-      "payment.get_order_status#2:corrupted_response"
     ],
     "violation": false,
     "violations": [],

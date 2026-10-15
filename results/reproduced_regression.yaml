@@ -26,8 +26,8 @@ expected:
   reproduction: true
   violation: duplicate_refund
 minimal: true
-discovered_at: 1792083174.9789364
+discovered_at: 1792094468.884623
 metadata:
-  reproduced_at: 1792083174.9789364
+  reproduced_at: 1792094468.884623
   minimization_evaluations: 27
   reduction_percentage: 50.0

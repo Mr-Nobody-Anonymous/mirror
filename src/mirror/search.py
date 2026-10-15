@@ -274,6 +274,33 @@ class AdaptiveSearchEngine:
         self.pair_trials: Dict[Tuple[str, str], int] = {}
         self.pair_violations: Dict[Tuple[str, str], int] = {}
 
+        self.triplet_trials: Dict[Tuple[str, str, str], int] = {}
+        self.triplet_violations: Dict[Tuple[str, str, str], int] = {}
+
+        self.seen_violation_types: Set[str] = set()
+        self.discovered_configurations: Set[str] = set()
+
+    def explain_arm_hierarchy(self) -> Dict[str, Any]:
+        """Explain the multi-tiered multi-armed bandit arm formulation for researchers."""
+        return {
+            "arm_definitions": {
+                "level_1_modes": "Individual fault modes across tools (e.g. timeout_after_commit, stale_read)",
+                "level_2_tool_modes": "Tool-bound fault modes (e.g. payment.refund:timeout_after_commit)",
+                "level_3_pairwise_interactions": "2-way fault combinations (e.g. timeout + stale_read)",
+                "level_4_triplet_interactions": "3-way high-order fault interactions",
+            },
+            "reward_function": {
+                "novel_violation": "2.0 (novelty bonus for triggering previously unseen invariant violation)",
+                "known_violation": "1.0 (reinforcement for reproducing an invariant violation)",
+                "safe_execution": "0.0 (no reward when safety invariants hold)",
+            },
+            "anti_stagnation": (
+                "Epsilon-greedy random exploration (15%) + configuration deduplication prevents "
+                "the algorithm from repeatedly getting stuck on the same discovered vulnerability."
+            ),
+            "exploration_constant": self.c,
+        }
+
     def _ucb_score(self, tool: str, mode: str, total_steps: int) -> float:
         key = f"{tool}:{mode}"
         trials = self.tool_mode_trials.get(key, 0)
@@ -343,25 +370,49 @@ class AdaptiveSearchEngine:
             mode = self.select_mode_for_tool(tool, step)
             faults.append(FaultRule(tool=tool, occurrence=occ, mode=mode))
 
+        # Anti-stagnation: if configuration was already discovered, mutate to diversify
+        config_sig = ";".join(sorted(f.signature() for f in faults))
+        if config_sig in self.discovered_configurations and self.rng.random() < 0.7 and faults:
+            idx_to_mutate = self.rng.randint(0, len(faults) - 1)
+            f_old = faults[idx_to_mutate]
+            valid_alt = [m for m in FaultCatalog.get_valid_modes_for_tool(f_old.tool) if m != f_old.mode and m != FaultMode.NONE]
+            if valid_alt:
+                faults[idx_to_mutate] = FaultRule(tool=f_old.tool, occurrence=f_old.occurrence, mode=self.rng.choice(valid_alt))
+
         return ScenarioConfig(
             id=scenario_id,
             initial_state=InitialState(),
             faults=faults,
         )
 
-    def record_feedback(self, faults: List[FaultRule], violation_occurred: bool) -> None:
-        """Update multi-armed bandit statistics based on experiment observation."""
+    def record_feedback(
+        self,
+        faults: List[FaultRule],
+        violation_occurred: bool,
+        violation_names: Optional[List[str]] = None,
+    ) -> None:
+        """Update multi-armed bandit statistics with novelty-aware reward modeling."""
+        if violation_occurred:
+            names = violation_names or []
+            new_types = set(names) - self.seen_violation_types
+            reward = 2.0 if new_types else 1.0
+            self.seen_violation_types.update(names)
+            cfg_sig = ";".join(sorted(f.signature() for f in faults))
+            self.discovered_configurations.add(cfg_sig)
+        else:
+            reward = 0.0
+
         for f in faults:
             tm_key = f"{f.tool}:{f.mode.value}"
             self.tool_mode_trials[tm_key] = self.tool_mode_trials.get(tm_key, 0) + 1
             if violation_occurred:
-                self.tool_mode_violations[tm_key] = self.tool_mode_violations.get(tm_key, 0) + 1
+                self.tool_mode_violations[tm_key] = self.tool_mode_violations.get(tm_key, 0) + int(reward)
 
         modes_in_cand = {f.mode.value for f in faults}
         for m in modes_in_cand:
             self.mode_trials[m] = self.mode_trials.get(m, 0) + 1
             if violation_occurred:
-                self.mode_violations[m] = self.mode_violations.get(m, 0) + 1
+                self.mode_violations[m] = self.mode_violations.get(m, 0) + int(reward)
 
         sigs = [f.signature() for f in faults]
         for i in range(len(sigs)):
@@ -369,7 +420,17 @@ class AdaptiveSearchEngine:
                 pair = (min(sigs[i], sigs[j]), max(sigs[i], sigs[j]))
                 self.pair_trials[pair] = self.pair_trials.get(pair, 0) + 1
                 if violation_occurred:
-                    self.pair_violations[pair] = self.pair_violations.get(pair, 0) + 1
+                    self.pair_violations[pair] = self.pair_violations.get(pair, 0) + int(reward)
+
+        # Track 3-way interactions (triplets)
+        if len(sigs) >= 3:
+            for i in range(len(sigs)):
+                for j in range(i + 1, len(sigs)):
+                    for k in range(j + 1, len(sigs)):
+                        triplet = tuple(sorted([sigs[i], sigs[j], sigs[k]]))
+                        self.triplet_trials[triplet] = self.triplet_trials.get(triplet, 0) + 1
+                        if violation_occurred:
+                            self.triplet_violations[triplet] = self.triplet_violations.get(triplet, 0) + int(reward)
 
     def run(self, budget: int) -> SearchResult:
         discovered: List[ScenarioConfig] = []
@@ -397,7 +458,7 @@ class AdaptiveSearchEngine:
             rep = evaluate_scenario(controller, agent_result, cand)
             viol_names = [v.invariant_name for v in rep.violations]
 
-            self.record_feedback(cand.faults, rep.safety_violation)
+            self.record_feedback(cand.faults, rep.safety_violation, viol_names)
 
             raw_experiments.append({
                 "step": step,
@@ -513,7 +574,7 @@ class HybridSearchEngine:
             viol_names = [v.invariant_name for v in rep.violations]
 
             # Update the bandit model with feedback from this trial
-            self.adaptive_engine.record_feedback(cand.faults, rep.safety_violation)
+            self.adaptive_engine.record_feedback(cand.faults, rep.safety_violation, viol_names)
 
             raw_experiments.append({
                 "step": step,

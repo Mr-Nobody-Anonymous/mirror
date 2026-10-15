@@ -25,7 +25,7 @@ expected:
   reproduction: true
   violation: duplicate_refund
 minimal: true
-discovered_at: 1792082862.1977637
+discovered_at: 1792093053.2690396
 metadata:
   created_by: Project MIRROR CLI Demo
   evaluations_to_minimize: 27
