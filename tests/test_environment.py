@@ -70,3 +70,50 @@ def test_environment_controller_reset():
     controller.reset()
     assert controller.ledger.total_refunds == 0
     assert len(controller.trace) == 0
+
+
+def test_refund_service_property_sync_on_exception():
+    """Verify service.successful_refunds and calls stay synchronized even when exceptions are raised."""
+    config = ScenarioConfig(
+        id="test-prop-sync",
+        faults=[FaultRule(tool="payment.refund", occurrence=1, mode=FaultMode.TIMEOUT_AFTER_COMMIT)],
+    )
+    controller = EnvironmentController(config=config)
+    service = RefundService(controller=controller)
+
+    with pytest.raises(TimeoutError):
+        service.refund(100)
+
+    # Invariant: property dynamically returns authoritative ledger count
+    assert service.successful_refunds == 1
+    assert service.calls == 1
+
+
+def test_stale_read_custom_order_id():
+    """Verify STALE_READ operates cleanly on custom orders without KeyError."""
+    config = ScenarioConfig(
+        id="test-custom-stale",
+        initial_state=InitialState(order_id="ORD-CUSTOM", order_amount=300),
+        faults=[FaultRule(tool="payment.get_order_status", occurrence=1, mode=FaultMode.STALE_READ)],
+    )
+    controller = EnvironmentController(config=config)
+    service = RefundService(controller=controller, order_id="ORD-CUSTOM")
+
+    # Commit refund
+    service.refund(300)
+    assert controller.ledger.total_refunds == 1
+
+    # Query status with STALE_READ on ORD-CUSTOM
+    status = service.get_order_status("ORD-CUSTOM")
+    assert status["refund_count"] == 0
+    assert status["cached"] is True
+
+
+def test_authoritative_ledger_initial_refund_count_consistency():
+    """Verify AuthoritativeLedger correctly sets status and refunded_amount when initial refund_count > 0."""
+    init_state = InitialState(order_id="ORD-PRE", order_amount=200, refund_count=1)
+    ledger = AuthoritativeLedger(init_state)
+    order = ledger.get_order_state("ORD-PRE")
+    assert order["refund_count"] == 1
+    assert order["refunded_amount"] == 200
+    assert order["status"] == "refunded"

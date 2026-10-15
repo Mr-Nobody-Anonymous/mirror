@@ -26,13 +26,15 @@ class AuthoritativeLedger:
 
     def __init__(self, initial_state: Optional[InitialState] = None):
         self.state = initial_state or InitialState()
+        init_refunded = self.state.order_amount if self.state.refund_count > 0 else 0
+        init_status = "refunded" if self.state.refund_count > 0 else "paid"
         self.orders: Dict[str, Dict[str, Any]] = {
             self.state.order_id: {
                 "order_id": self.state.order_id,
                 "amount": self.state.order_amount,
-                "refunded_amount": 0,
+                "refunded_amount": init_refunded,
                 "refund_count": self.state.refund_count,
-                "status": "paid",
+                "status": init_status,
                 "refund_transactions": [],
             }
         }
@@ -203,6 +205,11 @@ class EnvironmentController:
             order_id = inputs.get("order_id", self.config.initial_state.order_id)
             if fault_mode == FaultMode.STALE_READ:
                 # Return stale snapshot prior to refund commit
+                if order_id not in self._stale_order_snapshots:
+                    if order_id in self.ledger.orders:
+                        self._stale_order_snapshots[order_id] = copy.deepcopy(self.ledger.orders[order_id])
+                    else:
+                        raise ValueError(f"Unknown order {order_id}")
                 output = copy.deepcopy(self._stale_order_snapshots[order_id])
                 output["cached"] = True
             else:
@@ -271,8 +278,28 @@ class RefundService:
         self.controller = controller
         self.order_id = order_id
         # Standalone counters (mirrors section 5)
-        self.successful_refunds = 0
-        self.calls = 0
+        self._successful_refunds = 0
+        self._calls = 0
+
+    @property
+    def successful_refunds(self) -> int:
+        if self.controller is not None:
+            return self.controller.ledger.total_refunds
+        return self._successful_refunds
+
+    @successful_refunds.setter
+    def successful_refunds(self, value: int) -> None:
+        self._successful_refunds = value
+
+    @property
+    def calls(self) -> int:
+        if self.controller is not None:
+            return len(self.controller.trace)
+        return self._calls
+
+    @calls.setter
+    def calls(self, value: int) -> None:
+        self._calls = value
 
     def refund(
         self,
@@ -283,10 +310,9 @@ class RefundService:
     ) -> Dict[str, Any]:
         """Execute refund."""
         target_order = order_id or self.order_id
-        self.calls += 1
 
         if self.controller is not None:
-            res = self.controller.execute_tool(
+            return self.controller.execute_tool(
                 "payment.refund",
                 {
                     "order_id": target_order,
@@ -294,11 +320,10 @@ class RefundService:
                     "idempotency_key": idempotency_key,
                 },
             )
-            self.successful_refunds = self.controller.ledger.total_refunds
-            return res
 
         # Standalone fallback mode (Section 5 minimal example)
-        self.successful_refunds += 1
+        self._calls += 1
+        self._successful_refunds += 1
         if timeout_after_commit:
             raise TimeoutError("Response lost after refund committed")
         return {"status": "success", "amount": amount, "order_id": target_order}
@@ -306,7 +331,6 @@ class RefundService:
     def get_order_status(self, order_id: Optional[str] = None) -> Dict[str, Any]:
         """Retrieve order status."""
         target_order = order_id or self.order_id
-        self.calls += 1
 
         if self.controller is not None:
             return self.controller.execute_tool(
@@ -314,8 +338,9 @@ class RefundService:
                 {"order_id": target_order},
             )
 
+        self._calls += 1
         return {
             "order_id": target_order,
-            "status": "refunded" if self.successful_refunds > 0 else "paid",
-            "refund_count": self.successful_refunds,
+            "status": "refunded" if self._successful_refunds > 0 else "paid",
+            "refund_count": self._successful_refunds,
         }

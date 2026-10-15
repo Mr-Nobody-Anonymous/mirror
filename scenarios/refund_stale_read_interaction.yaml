@@ -1,0 +1,27 @@
+id: refund_stale_read_002
+task: refund_order
+initial_state:
+  order_id: ORD-104
+  order_amount: 100
+  refund_count: 0
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+faults:
+  - tool: payment.refund
+    occurrence: 1
+    mode: timeout_after_commit
+    parameters: {}
+  - tool: payment.get_order_status
+    occurrence: 1
+    mode: stale_read
+    parameters: {}
+invariants:
+  - refund_count <= 1
+  - ledger_matches_agent
+expected:
+  reproduction: true
+  violation: duplicate_refund
+minimal: true
+metadata:
+  description: "Core Project MIRROR Interaction: Timeout after commit coupled with stale status lookup triggers duplicate refund on reconciling agent."

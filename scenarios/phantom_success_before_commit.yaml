@@ -1,0 +1,23 @@
+id: phantom_success_003
+task: refund_order
+initial_state:
+  order_id: ORD-104
+  order_amount: 100
+  refund_count: 0
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+faults:
+  - tool: payment.refund
+    occurrence: 1
+    mode: timeout_before_commit
+    parameters: {}
+invariants:
+  - refund_count <= 1
+  - ledger_matches_agent
+expected:
+  reproduction: true
+  violation: phantom_success
+minimal: true
+metadata:
+  description: "Request times out before commit. Agent assumes success without verification, creating phantom success violation."

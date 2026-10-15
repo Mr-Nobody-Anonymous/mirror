@@ -30,7 +30,7 @@ from typing import Any, Dict, List
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from mirror.models import FaultMode, FaultRule, InitialState, RegressionArtifact, ScenarioConfig
-from mirror.agent import NaiveRefundAgent, RobustRefundAgent
+from mirror.agent import NaiveRefundAgent, RobustRefundAgent, ReconcilingRefundAgent
 from mirror.search import RandomSearchEngine, AdaptiveSearchEngine
 from mirror.minimize import ScenarioMinimizer
 from mirror.regression import RegressionRunner, save_regression_artifact
@@ -46,6 +46,7 @@ def run_benchmarks(
 
     naive_agent = NaiveRefundAgent(max_attempts=2)
     robust_agent = RobustRefundAgent(max_attempts=2)
+    reconciling_agent = ReconcilingRefundAgent(max_attempts=2)
     regression_runner = RegressionRunner()
 
     print("======================================================================")
@@ -153,12 +154,31 @@ def run_benchmarks(
         if rep:
             is_strictly_1_minimal = False
 
+    # Also evaluate multi-fault interaction minimization on ReconcilingRefundAgent
+    bloated_interaction = ScenarioConfig(
+        id="bloated-interact-002",
+        faults=[
+            FaultRule(tool="payment.refund", occurrence=1, mode=FaultMode.TIMEOUT_AFTER_COMMIT),
+            FaultRule(tool="payment.refund", occurrence=3, mode=FaultMode.SERVER_ERROR),
+            FaultRule(tool="payment.get_order_status", occurrence=1, mode=FaultMode.STALE_READ),
+            FaultRule(tool="payment.get_order_status", occurrence=2, mode=FaultMode.RATE_LIMITED),
+        ],
+    )
+    minimizer_interact = ScenarioMinimizer(agent=reconciling_agent, target_violation_type="duplicate_refund")
+    min_interact, evals_interact = minimizer_interact.minimize(bloated_interaction, method="ddmin")
+
     benchmark_summary["delta_debugging"] = {
         "original_fault_count": original_count,
         "minimized_fault_count": minimized_count,
         "reduction_percentage": reduction_pct,
         "evaluations_to_minimize": evals_used,
         "is_strictly_1_minimal": is_strictly_1_minimal,
+        "interaction_original_faults": len(bloated_interaction.faults),
+        "interaction_minimized_faults": len(min_interact.faults),
+        "interaction_reduction_pct": round(
+            ((len(bloated_interaction.faults) - len(min_interact.faults)) / len(bloated_interaction.faults)) * 100, 2
+        ),
+        "interaction_evaluations": evals_interact,
     }
 
     # -------------------------------------------------------------------------

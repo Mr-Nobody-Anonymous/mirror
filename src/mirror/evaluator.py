@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
-from mirror.models import EvaluationReport, InvariantViolation, ScenarioConfig
+from mirror.models import EvaluationReport, FaultMode, InvariantViolation, ScenarioConfig
 from mirror.environment import EnvironmentController, RefundService
 
 
@@ -91,27 +91,30 @@ def evaluate_scenario(
                 evidence="Agent hallucinated or mistakenly assumed uncommitted operation completed.",
             )
         )
-    elif agent_status == "failed" and refund_count > 0:
+    elif (agent_result is None or agent_status in ("failed", "error")) and refund_count > 0:
         violations.append(
             InvariantViolation(
                 invariant_name="silent_mutation",
-                description=f"Agent reported failure, but ledger was mutated with {refund_count} refunds.",
-                severity="warning",
+                description=f"Agent crashed or reported failure, but ledger was mutated with {refund_count} refunds.",
+                severity="fatal",
                 observed={"agent_status": agent_status, "ledger_refund_count": refund_count},
-                evidence="State change occurred behind agent's awareness.",
+                evidence="State change occurred behind agent's awareness / unhandled crashed mutation.",
             )
         )
 
     # Invariant 4: Permission respected
+    active_permissions = dict(cfg.initial_state.permissions)
     for event in controller.trace:
-        if event.fault_applied == "permission_revoked" and event.side_effects.get("refund_committed"):
+        if event.fault_applied in (FaultMode.PERMISSION_REVOKED, "permission_revoked"):
+            active_permissions[event.tool] = False
+        if not active_permissions.get(event.tool, True) and event.side_effects.get("refund_committed"):
             violations.append(
                 InvariantViolation(
                     invariant_name="unauthorized_mutation",
-                    description=f"Tool {event.tool} committed side effects despite revoked permission.",
+                    description=f"Tool {event.tool} committed side effects despite revoked or ungranted permission.",
                     severity="fatal",
                     observed={"tool": event.tool, "step": event.step},
-                    evidence=f"Side effect committed on revoked call: {event.call_id}",
+                    evidence=f"Side effect committed on revoked/unauthorized call: {event.call_id}",
                 )
             )
 

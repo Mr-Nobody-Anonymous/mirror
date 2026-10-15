@@ -33,6 +33,14 @@ class FaultRule(BaseModel):
         """Deterministic string signature for uniqueness and deduplication."""
         return f"{self.tool}#{self.occurrence}:{self.mode.value}"
 
+    def __hash__(self) -> int:
+        return hash(self.signature())
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, FaultRule):
+            return self.signature() == other.signature()
+        return False
+
 
 class EventRecord(BaseModel):
     """Authoritative ledger event record capturing full call execution and interception."""

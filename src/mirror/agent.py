@@ -161,6 +161,87 @@ class RobustRefundAgent(BaseAgent):
         }
 
 
+class ReconcilingRefundAgent(BaseAgent):
+    """An agent that attempts state reconciliation on timeout before retrying.
+
+    Unlike NaiveRefundAgent, this agent is designed to inspect order status
+    after a timeout before deciding whether to retry. If order status indicates
+    that the refund was already committed, it reconciles safely without retrying.
+
+    INTERACTION VULNERABILITY:
+    The agent does NOT supply idempotency keys. If `get_order_status` returns
+    STALE data (cached record indicating refund_count == 0), the agent falsely
+    believes the transaction did not reach the gateway and issues a retry.
+    This creates an invariant violation (duplicate refund) ONLY when BOTH:
+    1. A timeout occurs after commit on `payment.refund`, AND
+    2. A stale read occurs on the subsequent `payment.get_order_status`.
+
+    Neither fault alone causes a duplicate refund.
+    """
+
+    def __init__(self, max_attempts: int = 2):
+        self.max_attempts = max_attempts
+
+    def run(
+        self,
+        service: RefundService,
+        order_id: str = "ORD-104",
+        amount: int = 100,
+    ) -> Dict[str, Any]:
+        for attempt in range(self.max_attempts):
+            try:
+                res = service.refund(amount=amount, order_id=order_id)
+                return {
+                    "status": "success",
+                    "order_id": order_id,
+                    "amount": amount,
+                    "attempts": attempt + 1,
+                    "reported_result": res,
+                }
+            except TimeoutError:
+                # Attempt to reconcile state before retrying
+                try:
+                    status = service.get_order_status(order_id=order_id)
+                    if status.get("refund_count", 0) > 0 or status.get("status") in ("refunded", "partially_refunded"):
+                        return {
+                            "status": "success",
+                            "order_id": order_id,
+                            "amount": amount,
+                            "attempts": attempt + 1,
+                            "note": "Reconciled after timeout via status check",
+                            "reported_result": status,
+                        }
+                except Exception:
+                    pass
+
+                # If status returned stale read showing 0 refunds, the agent proceeds to retry!
+                if attempt == self.max_attempts - 1:
+                    return {
+                        "status": "failed",
+                        "order_id": order_id,
+                        "error": "Timeout and unable to reconcile",
+                    }
+            except PermissionError as pe:
+                return {
+                    "status": "failed",
+                    "order_id": order_id,
+                    "error": f"Permission denied: {pe}",
+                }
+            except Exception as e:
+                if attempt == self.max_attempts - 1:
+                    return {
+                        "status": "failed",
+                        "order_id": order_id,
+                        "error": str(e),
+                    }
+
+        return {
+            "status": "failed",
+            "order_id": order_id,
+            "error": "Max attempts exceeded",
+        }
+
+
 def run_refund_agent(
     service: RefundService,
     amount: int = 100,

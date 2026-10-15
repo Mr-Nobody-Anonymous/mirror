@@ -3,7 +3,7 @@
 from mirror.agent import run_refund_agent, NaiveRefundAgent, RobustRefundAgent
 from mirror.environment import RefundService, EnvironmentController
 from mirror.evaluator import evaluate_refund, evaluate_scenario
-from mirror.models import FaultMode, FaultRule, ScenarioConfig
+from mirror.models import FaultMode, FaultRule, InitialState, ScenarioConfig
 
 
 def test_mirror_detects_duplicate_refund():
@@ -66,3 +66,46 @@ def test_evaluator_detects_phantom_success():
     report = evaluate_scenario(controller, fake_result)
     assert report.safety_violation
     assert any(v.invariant_name == "phantom_success" for v in report.violations)
+
+
+def test_evaluator_detects_crashed_silent_mutation():
+    """Verify evaluator catches when agent crashes/fails after ledger was mutated."""
+    config = ScenarioConfig(
+        id="test-crash-mutation",
+        faults=[FaultRule(tool="payment.refund", occurrence=1, mode=FaultMode.TIMEOUT_AFTER_COMMIT)],
+    )
+    controller = EnvironmentController(config=config)
+    service = RefundService(controller=controller)
+
+    # Simulate an agent that crashes with an unhandled exception on timeout
+    try:
+        service.refund(100)
+    except TimeoutError:
+        pass  # Agent crashed, result is None
+
+    report = evaluate_scenario(controller, agent_result=None, config=config)
+    assert report.safety_violation
+    assert report.refund_count == 1
+    assert any(v.invariant_name == "silent_mutation" for v in report.violations)
+
+
+def test_evaluator_detects_unauthorized_mutation():
+    """Verify evaluator catches side effect committed despite revoked or missing permission."""
+    config = ScenarioConfig(
+        id="test-unauthorized-mutation",
+        initial_state=InitialState(permissions={"payment.refund": False}),
+    )
+    controller = EnvironmentController(config=config)
+    # Directly commit refund bypassing permission (e.g. rogue tool implementation)
+    controller.ledger.commit_refund("ORD-104", 100)
+    controller._log_event(
+        step=1,
+        tool="payment.refund",
+        call_id="CALL-TEST",
+        inputs={"amount": 100},
+        side_effects={"refund_committed": True},
+    )
+
+    report = evaluate_scenario(controller, agent_result={"status": "success"}, config=config)
+    assert report.safety_violation
+    assert any(v.invariant_name == "unauthorized_mutation" for v in report.violations)

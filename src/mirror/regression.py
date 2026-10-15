@@ -34,12 +34,15 @@ def save_regression_artifact(
             "order_id": artifact.initial_state.order_id,
             "order_amount": artifact.initial_state.order_amount,
             "refund_count": artifact.initial_state.refund_count,
+            "permissions": artifact.initial_state.permissions,
+            "metadata": artifact.initial_state.metadata,
         },
         "faults": [
             {
                 "tool": f.tool,
                 "occurrence": f.occurrence,
                 "mode": f.mode.value,
+                "parameters": f.parameters,
             }
             for f in artifact.faults
         ],
@@ -66,6 +69,7 @@ def load_regression_artifact(path: Union[str, Path]) -> RegressionArtifact:
             tool=f["tool"],
             occurrence=f["occurrence"],
             mode=FaultMode(f["mode"]),
+            parameters=f.get("parameters", {}),
         )
         for f in raw.get("faults", [])
     ]
@@ -75,6 +79,8 @@ def load_regression_artifact(path: Union[str, Path]) -> RegressionArtifact:
         order_id=init_state_raw.get("order_id", "ORD-104"),
         order_amount=init_state_raw.get("order_amount", 100),
         refund_count=init_state_raw.get("refund_count", 0),
+        permissions=init_state_raw.get("permissions", {"payment.refund": True, "payment.get_order_status": True}),
+        metadata=init_state_raw.get("metadata", {}),
     )
 
     return RegressionArtifact(

@@ -1,0 +1,24 @@
+id: corrupted_response_007
+task: refund_order
+initial_state:
+  order_id: ORD-104
+  order_amount: 100
+  refund_count: 0
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+faults:
+  - tool: payment.refund
+    occurrence: 1
+    mode: corrupted_response
+    parameters:
+      error_code: "MALFORMED_JSON"
+invariants:
+  - refund_count <= 1
+  - ledger_matches_agent
+expected:
+  reproduction: true
+  violation: none
+minimal: true
+metadata:
+  description: "Gateway commits transaction but returns corrupted/malformed JSON payload."

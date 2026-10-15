@@ -82,6 +82,17 @@ class ScenarioMinimizer:
             logger.warning("Scenario does not reproduce target violation before minimization.")
             return scenario, self.evaluation_count
 
+        # Check if 0 faults triggers the violation (unconditionally buggy agent)
+        reproduces_empty, _ = self.test_fault_subset(scenario, [])
+        if reproduces_empty:
+            minimized_cfg = copy.deepcopy(scenario)
+            minimized_cfg.faults = []
+            minimized_cfg.metadata["minimized"] = True
+            minimized_cfg.metadata["evaluations_used"] = self.evaluation_count
+            minimized_cfg.metadata["original_fault_count"] = len(original_faults)
+            minimized_cfg.metadata["minimal_fault_count"] = 0
+            return minimized_cfg, self.evaluation_count
+
         if len(original_faults) <= 1:
             return scenario, self.evaluation_count
 
@@ -104,16 +115,17 @@ class ScenarioMinimizer:
         base_scenario: ScenarioConfig,
         faults: List[FaultRule],
     ) -> List[FaultRule]:
-        """Classic ddmin partitioning algorithm."""
+        """Classic ddmin partitioning algorithm (Zeller 2002) using index complement slicing."""
         c = list(faults)
         n = 2
 
         while len(c) >= 2:
-            subsets = self._partition(c, n)
+            partitions = self._partition_indices(len(c), n)
             reduced = False
 
             # Test individual subsets
-            for s in subsets:
+            for start, end in partitions:
+                s = c[start:end]
                 reproduces, _ = self.test_fault_subset(base_scenario, s)
                 if reproduces:
                     c = s
@@ -124,9 +136,9 @@ class ScenarioMinimizer:
             if reduced:
                 continue
 
-            # Test complements (c \ s)
-            for s in subsets:
-                complement = [f for f in c if f not in s]
+            # Test complements (c \ s) via index slicing
+            for start, end in partitions:
+                complement = c[:start] + c[end:]
                 if not complement:
                     continue
                 reproduces, _ = self.test_fault_subset(base_scenario, complement)
@@ -162,14 +174,20 @@ class ScenarioMinimizer:
         return current
 
     @staticmethod
-    def _partition(items: List[FaultRule], n: int) -> List[List[FaultRule]]:
-        """Split items into n roughly equal chunks."""
-        k, m = divmod(len(items), n)
-        subsets = []
+    def _partition_indices(total: int, n: int) -> List[Tuple[int, int]]:
+        """Return (start, end) index intervals partitioning `total` items into n chunks."""
+        k, m = divmod(total, n)
+        intervals = []
         start = 0
         for i in range(n):
             end = start + k + (1 if i < m else 0)
             if start < end:
-                subsets.append(items[start:end])
+                intervals.append((start, end))
             start = end
-        return subsets
+        return intervals
+
+    @classmethod
+    def _partition(cls, items: List[FaultRule], n: int) -> List[List[FaultRule]]:
+        """Split items into n roughly equal chunks."""
+        indices = cls._partition_indices(len(items), n)
+        return [items[start:end] for start, end in indices]

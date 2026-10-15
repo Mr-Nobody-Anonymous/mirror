@@ -1,0 +1,19 @@
+id: unauthorized_refund_009
+task: refund_order
+initial_state:
+  order_id: ORD-104
+  order_amount: 100
+  refund_count: 0
+  permissions:
+    payment.refund: false
+    payment.get_order_status: true
+faults: []
+invariants:
+  - refund_count <= 1
+  - permission_respected
+expected:
+  reproduction: true
+  violation: permission_denied
+minimal: true
+metadata:
+  description: "Initial state denies payment.refund permission. Agent attempting refund is rejected before commit."

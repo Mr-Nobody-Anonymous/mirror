@@ -23,7 +23,14 @@ from mirror.environment import (
     EnvironmentController,
 )
 from mirror.evaluator import evaluate_scenario, evaluate_refund
-from mirror.agent import BaseAgent, NaiveRefundAgent, RobustRefundAgent
+from mirror.agent import BaseAgent, NaiveRefundAgent, RobustRefundAgent, ReconcilingRefundAgent
+from mirror.search import RandomSearchEngine, AdaptiveSearchEngine, SearchResult
+from mirror.minimize import ScenarioMinimizer
+from mirror.regression import (
+    RegressionRunner,
+    load_regression_artifact,
+    save_regression_artifact,
+)
 
 __all__ = [
     "FaultMode",
@@ -42,4 +49,12 @@ __all__ = [
     "BaseAgent",
     "NaiveRefundAgent",
     "RobustRefundAgent",
+    "ReconcilingRefundAgent",
+    "RandomSearchEngine",
+    "AdaptiveSearchEngine",
+    "SearchResult",
+    "ScenarioMinimizer",
+    "RegressionRunner",
+    "load_regression_artifact",
+    "save_regression_artifact",
 ]

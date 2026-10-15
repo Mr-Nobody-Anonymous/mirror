@@ -1,0 +1,23 @@
+id: balance_exceeded_008
+task: refund_order
+initial_state:
+  order_id: ORD-104
+  order_amount: 100
+  refund_count: 0
+  permissions:
+    payment.refund: true
+    payment.get_order_status: true
+faults:
+  - tool: payment.refund
+    occurrence: 1
+    mode: timeout_after_commit
+    parameters: {}
+invariants:
+  - refund_count <= 1
+  - balance_consistent
+expected:
+  reproduction: true
+  violation: balance_exceeded
+minimal: true
+metadata:
+  description: "Duplicate unacknowledged commit results in cumulative refund amount exceeding order amount."
