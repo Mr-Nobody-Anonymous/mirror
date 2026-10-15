@@ -9,6 +9,31 @@ description = "Project MIRROR: Research-grade crash-test simulator for AI agents
 readme = "README.md"
 authors = [{ name = "MIRROR Research Team" }]
 requires-python = ">=3.10"
+keywords = [
+    "ai-agents",
+    "agentic-ai",
+    "fault-injection",
+    "chaos-engineering",
+    "delta-debugging",
+    "regression-testing",
+    "crash-test-simulator",
+    "robustness",
+    "safety-invariants",
+    "llm-testing",
+    "benchmark",
+    "multi-armed-bandit",
+    "distributed-systems",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "pydantic>=2.0",
     "pyyaml>=6.0",

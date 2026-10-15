@@ -5,6 +5,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-32%20passed-brightgreen.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Topics](https://img.shields.io/badge/topics-ai--agents%20%7C%20fault--injection%20%7C%20chaos--engineering%20%7C%20delta--debugging-orange.svg)]()
 
 ---
 
